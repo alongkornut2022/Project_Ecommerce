@@ -20,10 +20,10 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    OrderTotal.belongsTo(models.DeliveryAddress, {
+    OrderTotal.belongsTo(models.CustomerAddress, {
       foreignKey: {
         allowNull: false,
-        name: 'deliveryAddressId',
+        name: 'customerAddressId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',

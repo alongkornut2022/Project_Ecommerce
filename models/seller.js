@@ -1,8 +1,8 @@
 module.exports = (sequelize, DataTypes) => {
-  const Customer = sequelize.define(
-    'Customer',
+  const Seller = sequelize.define(
+    'Seller',
     {
-      username: {
+      shopName: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
@@ -30,41 +30,30 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      gender: DataTypes.ENUM('male', 'female', 'other'),
-      birthDate: DataTypes.DATEONLY,
-      userPicture: DataTypes.STRING,
+      shopPicture: DataTypes.STRING,
     },
-    { tableName: 'customer', underscored: true, timestamps: true }
+    { tableName: 'seller', underscored: true, timestamps: true }
   );
 
-  Customer.associate = (models) => {
-    Customer.hasMany(models.CustomerAddress, {
+  Seller.associate = (models) => {
+    Seller.hasOne(models.SellerAddress, {
       foreignKey: {
         allowNull: false,
-        name: 'customerId',
+        name: 'sellerId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
     });
 
-    Customer.hasOne(models.ProductReview, {
+    Seller.hasMany(models.ProductItem, {
       foreignKey: {
         allowNull: false,
-        name: 'customerId',
-      },
-      onDelete: 'RESTRICT',
-      onUpdate: 'RESTRICT',
-    });
-
-    Customer.hasMany(models.Cart, {
-      foreignKey: {
-        allowNull: false,
-        name: 'customerId',
+        name: 'sellerId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
     });
   };
 
-  return Customer;
+  return Seller;
 };

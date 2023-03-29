@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
-  const DeliveryAddress = sequelize.define(
-    'DeliveryAddress',
+  const CustomerAddress = sequelize.define(
+    'CustomerAddress',
     {
       firstName: {
         type: DataTypes.STRING,
@@ -53,14 +53,14 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: 'delivery_address',
+      tableName: 'customer_address',
       underscored: true,
       timestamps: true,
     }
   );
 
-  DeliveryAddress.associate = (models) => {
-    DeliveryAddress.belongsTo(models.Customer, {
+  CustomerAddress.associate = (models) => {
+    CustomerAddress.belongsTo(models.Customer, {
       foreignKey: {
         allowNull: false,
         name: 'customerId',
@@ -69,15 +69,15 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    DeliveryAddress.hasOne(models.OrderTotal, {
+    CustomerAddress.hasOne(models.OrderTotal, {
       foreignKey: {
         allowNull: false,
-        name: 'deliveryAddressId',
+        name: 'customerAddressId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
     });
   };
 
-  return DeliveryAddress;
+  return CustomerAddress;
 };

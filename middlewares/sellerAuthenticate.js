@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { Customer } = require('../models');
+const { Seller } = require('../models');
 const createError = require('../utils/createError');
 
 module.exports = async (req, res, next) => {
@@ -17,22 +17,25 @@ module.exports = async (req, res, next) => {
     const secretKey = process.env.JWT_SECRET_KEY;
     const decodedPayload = jwt.verify(token, secretKey);
 
-    const customer = await Customer.findOne({
+    const seller = await Seller.findOne({
       where: { id: decodedPayload.id },
+      attributes: {
+        exclude: ['password'],
+      },
     });
 
-    if (!customer) {
+    if (!seller) {
       createError('user not found', 400);
     }
 
     if (
       decodedPayload.iat * 1000 <
-      new Date(customer.lastUpdatePassword).getTime()
+      new Date(seller.lastUpdatePassword).getTime()
     ) {
       createError('you sre unauthorized', 401);
     }
 
-    req.customer = customer;
+    req.seller = seller;
     next();
   } catch (err) {
     next(err);

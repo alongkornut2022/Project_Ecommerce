@@ -2,11 +2,16 @@ module.exports = (sequelize, Datatypes) => {
   const ProductStock = sequelize.define(
     'ProductStock',
     {
-      instock: {
+      stockStart: {
         type: Datatypes.INTEGER,
         allowNull: false,
       },
       alreadysold: {
+        type: Datatypes.INTEGER,
+        allowNull: false,
+        defaultValue: '0',
+      },
+      inventory: {
         type: Datatypes.INTEGER,
         allowNull: false,
       },

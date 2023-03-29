@@ -1,27 +1,27 @@
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const createError = require('../utils/createError');
-const { Customer } = require('../models');
+const { Seller } = require('../models');
 const cloudinary = require('../utils/cloundinary');
 const { default: isStrongPassword } = require('validator/lib/isStrongPassword');
 
-exports.getCustomerMe = async (req, res) => {
-  const customer = JSON.parse(JSON.stringify(req.customer));
-  res.json({ customer });
+exports.getSellerMe = async (req, res) => {
+  const seller = JSON.parse(JSON.stringify(req.seller));
+  res.json({ seller });
 };
 
-exports.updateCustomer = async (req, res, next) => {
+exports.updateSeller = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { username, email, phoneNumber, gender, birthDate } = req.body;
+    const { shopName, email, phoneNumber } = req.body;
 
-    if (req.customer.id != id) {
-      createError('invaild customer', 400);
+    if (req.seller.id != id) {
+      createError('invaild seller', 400);
     }
 
-    await Customer.update(
-      { username, email, phoneNumber, gender, birthDate },
-      { where: { id: req.customer.id } }
+    await Seller.update(
+      { shopName, email, phoneNumber },
+      { where: { id: req.seller.id } }
     );
     res.json({ message: 'update success' });
   } catch (err) {
@@ -29,33 +29,33 @@ exports.updateCustomer = async (req, res, next) => {
   }
 };
 
-exports.updateCustomerPic = async (req, res, next) => {
+exports.updateSellerPic = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (req.customer.id != id) {
+    if (req.seller.id != id) {
       createError('invaild customer', 400);
     }
 
     if (!req.files) {
-      createError('customerPicture is required', 400);
+      createError('sellerPicture is required', 400);
     }
 
     const updateValue = {};
-    const result = await cloudinary.upload(req.files.userPicture[0].path);
-    if (req.customer.userPicture) {
-      const splited = req.customer.userPicture.split('/');
+    const result = await cloudinary.upload(req.files.shopPicture[0].path);
+    if (req.seller.shopPicture) {
+      const splited = req.seller.shopPicture.split('/');
       const publicId = splited[splited.length - 1].split('.')[0];
       await cloudinary.destroy(publicId);
     }
-    updateValue.userPicture = result.secure_url;
+    updateValue.shopPicture = result.secure_url;
 
-    await Customer.update(updateValue, { where: { id: req.customer.id } });
+    await Seller.update(updateValue, { where: { id: req.seller.id } });
     res.json(updateValue);
   } catch (err) {
     next(err);
   } finally {
-    if (req.files.userPicture) {
-      fs.unlinkSync(req.files.userPicture[0].path);
+    if (req.files.shopPicture) {
+      fs.unlinkSync(req.files.shopPicture[0].path);
     }
   }
 };
@@ -64,15 +64,15 @@ exports.changePassword = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (req.customer.id != id) {
+    if (req.seller.id != id) {
       createError('invaild customer', 400);
     }
 
     const { oldPassword, newPassword, confirmNewPassword } = req.body;
 
-    const customer = await Customer.findOne({
+    const seller = await seller.findOne({
       where: {
-        id: req.customer.id,
+        id: req.seller.id,
       },
     });
 
@@ -98,9 +98,9 @@ exports.changePassword = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await Customer.update(
+    await Seller.update(
       { password: hashedPassword },
-      { where: { id: req.customer.id } }
+      { where: { id: req.seller.id } }
     );
     res.json({ message: 'change password success' });
   } catch (err) {
@@ -108,20 +108,20 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-exports.deleteCustomer = async (req, res, next) => {
+exports.deleteSeller = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (req.customer.id != id) {
-      createError('invaild customer', 400);
+    if (req.seller.id != id) {
+      createError('invaild seller', 400);
     }
 
-    const result = await Customer.destroy({
+    const result = await Seller.destroy({
       where: { id: id },
     });
 
     if (result === 0) {
-      createError('customer with this id not found', 400);
+      createError('seller with this id not found', 400);
     }
     res.status(204).json();
   } catch (err) {

@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       productUnitprice: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
     },
@@ -46,6 +46,15 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: {
         allowNull: false,
         name: 'productId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    ProductItem.belongsTo(models.Seller, {
+      foreignKey: {
+        allowNull: false,
+        name: 'sellerId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
