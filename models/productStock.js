@@ -20,10 +20,10 @@ module.exports = (sequelize, Datatypes) => {
   );
 
   ProductStock.associate = (models) => {
-    ProductStock.belongsTo(models.ProductItem, {
+    ProductStock.hasOne(models.ProductItem, {
       foreignKey: {
-        allowNull: false,
-        name: 'productId',
+        allowNull: true,
+        name: 'stockId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',

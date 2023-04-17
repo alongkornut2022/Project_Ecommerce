@@ -8,7 +8,7 @@ router.get('/me', customerController.getCustomerMe);
 router.patch('/:id', customerController.updateCustomer);
 router.patch(
   '/profilepic/:id',
-  upload.fields([{ name: 'userPicture', maxCount: 1 }]),
+  upload.fields([{ name: 'userPicture', maxCount: 3 }]),
   customerController.updateCustomerPic
 );
 router.delete('/:id', customerController.deleteCustomer);

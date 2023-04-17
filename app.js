@@ -38,8 +38,6 @@ app.use('/sellers/products', sellerAuthenticate, sellerProductRoute);
 app.use('/address', addressRoute);
 
 app.use('/products/', productRoute);
-app.use('/products/category', sellerAuthenticate, categoryRoute);
-app.use('/products/stock', sellerAuthenticate, stockRoute);
 
 app.use('/Purchase', customerAuthenticate, PurchaseRoute);
 

@@ -1,25 +1,23 @@
 const express = require('express');
-const SellerProductController = require('../../controllers/sellerProductController');
+const sellerProductController = require('../../controllers/sellerProductController');
+const stockRoute = require('../../routes/products/stockRoute');
+const imagesRoute = require('../../routes/products/imagesRoute');
+const specRoute = require('../../routes/products/specRoute');
 
 const router = express.Router();
 
-router.post('/:sellerId', SellerProductController.createProductSeller);
-router.get('/:sellerId', SellerProductController.getAllProductSeller);
+router.post('/', sellerProductController.createProduct);
+router.get('/', sellerProductController.getAllProductBySeller);
+router.get('/:productId', sellerProductController.getProductById);
 router.get(
-  '/:sellerId/productId',
-  SellerProductController.getProductByIdSeller
+  '/category/:categoryId',
+  sellerProductController.getProductByCategoryId
 );
-router.get(
-  '/:sellerId/:categoryId',
-  SellerProductController.getProductByCategorySeller
-);
-router.patch(
-  '/:sellerId/:productId',
-  SellerProductController.updateProductSeller
-);
-router.delete(
-  '/:sellerId/:productId',
-  SellerProductController.deleteProductSeller
-);
+router.patch('/:productId', sellerProductController.updateProduct);
+// router.delete('/:productId', sellerProductController.deleteProduct);
+
+router.use('/stock', stockRoute);
+router.use('/images', imagesRoute);
+router.use('/spec', specRoute);
 
 module.exports = router;

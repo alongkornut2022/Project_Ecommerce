@@ -42,11 +42,13 @@ exports.updateCustomerPic = async (req, res, next) => {
 
     const updateValue = {};
     const result = await cloudinary.upload(req.files.userPicture[0].path);
+
     if (req.customer.userPicture) {
       const splited = req.customer.userPicture.split('/');
       const publicId = splited[splited.length - 1].split('.')[0];
       await cloudinary.destroy(publicId);
     }
+
     updateValue.userPicture = result.secure_url;
 
     await Customer.update(updateValue, { where: { id: req.customer.id } });

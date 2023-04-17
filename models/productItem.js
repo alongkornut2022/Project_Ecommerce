@@ -24,16 +24,34 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    ProductItem.hasOne(models.ProductStock, {
+    ProductItem.belongsTo(models.ProductImages, {
       foreignKey: {
-        allowNull: false,
-        name: 'productId',
+        allowNull: true,
+        name: 'imagesId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
     });
 
-    ProductItem.hasMany(models.ProductReview, {
+    ProductItem.belongsTo(models.ProductStock, {
+      foreignKey: {
+        allowNull: true,
+        name: 'stockId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    ProductItem.belongsTo(models.ProductSpec, {
+      foreignKey: {
+        allowNull: true,
+        name: 'specId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    ProductItem.hasMany(models.ProductRating, {
       foreignKey: {
         allowNull: false,
         name: 'productId',

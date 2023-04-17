@@ -1,21 +1,17 @@
 module.exports = (sequelize, Datatypes) => {
-  const ProductReview = sequelize.define(
-    'ProductReview',
+  const ProductRating = sequelize.define(
+    'ProductRating',
     {
       ratingScale: {
         type: Datatypes.INTEGER,
         allowNull: true,
       },
-      commentDetail: {
-        type: Datatypes.STRING,
-        allowNull: true,
-      },
     },
-    { tableName: 'product_review', underscored: true, timestamps: true }
+    { tableName: 'product_rating', underscored: true, timestamps: true }
   );
 
-  ProductReview.associate = (models) => {
-    ProductReview.belongsTo(models.ProductItem, {
+  ProductRating.associate = (models) => {
+    ProductRating.belongsTo(models.ProductItem, {
       foreignKey: {
         allowNull: false,
         name: 'productId',
@@ -24,7 +20,7 @@ module.exports = (sequelize, Datatypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    ProductReview.belongsTo(models.Customer, {
+    ProductRating.belongsTo(models.Customer, {
       foreignKey: {
         allowNull: false,
         name: 'customerId',
@@ -34,5 +30,5 @@ module.exports = (sequelize, Datatypes) => {
     });
   };
 
-  return ProductReview;
+  return ProductRating;
 };
