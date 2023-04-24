@@ -45,7 +45,7 @@ module.exports = (sequelize, Datatypes) => {
   ProductImages.associate = (models) => {
     ProductImages.hasOne(models.ProductItem, {
       foreignKey: {
-        allowNull: false,
+        allowNull: true,
         name: 'imagesId',
       },
       onDelete: 'RESTRICT',

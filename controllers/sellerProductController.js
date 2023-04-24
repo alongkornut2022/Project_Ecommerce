@@ -1,8 +1,9 @@
 const { QueryTypes, Op } = require('sequelize');
-const { ProductItem, sequelize } = require('../models');
+const { ProductItem, ProductStock, sequelize } = require('../models');
 const createError = require('../utils/createError');
 
 exports.createProduct = async (req, res, next) => {
+  // const t = await sequelize.transaction();
   try {
     const {
       productName,
@@ -11,23 +12,53 @@ exports.createProduct = async (req, res, next) => {
       stockId,
       imagesId,
       specId,
+      stockStart,
+      alreadysold,
+      inventory,
     } = req.body;
 
     if (!req.seller.id) {
       createError('invaild seller', 400);
     }
 
-    const productitems = await ProductItem.create({
-      productName,
-      productUnitprice,
-      categoryId,
-      stockId,
-      imagesId,
-      specId,
-      sellerId: req.seller.id,
+    const productitems = await ProductItem.create(
+      {
+        productName,
+        productUnitprice,
+        categoryId,
+        stockId,
+        imagesId,
+        specId,
+        sellerId: req.seller.id,
+      }
+      // { transaction: t }
+    );
+    // res.status(201).json({ productitems: productitems });
+
+    const productstocks = await ProductStock.create(
+      {
+        stockStart,
+        alreadysold,
+        inventory,
+      }
+      // { transaction: t }
+    );
+
+    await ProductItem.update(
+      { stockId: productstocks.id },
+      { where: { id: productitems.id } }
+      // { transaction: t }
+    );
+
+    const products = await ProductItem.findOne({
+      where: { id: productitems.id },
     });
-    res.status(201).json({ productitems: productitems });
+
+    // await t.commit();
+
+    res.status(201).json({ products: products });
   } catch (err) {
+    // await t.rollback();
     next(err);
   }
 };

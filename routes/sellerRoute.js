@@ -12,7 +12,6 @@ router.patch(
   sellerController.updateSellerPic
 );
 router.delete('/:id', sellerController.deleteSeller);
-
 router.patch('/changepassword/:id', sellerController.changePassword);
 
 module.exports = router;

@@ -4,6 +4,7 @@ const createError = require('../../utils/createError');
 const cloudinary = require('../../utils/cloundinary');
 
 exports.createProductImages = async (req, res, next) => {
+  // const t = await sequelize.transaction();
   try {
     const { productId } = req.params;
 
@@ -43,20 +44,32 @@ exports.createProductImages = async (req, res, next) => {
       image9,
     ] = result;
 
-    const productImages = await ProductImages.create({
-      image1,
-      image2,
-      image3,
-      image4,
-      image5,
-      image6,
-      image7,
-      image8,
-      image9,
-    });
+    const productImages = await ProductImages.create(
+      {
+        image1,
+        image2,
+        image3,
+        image4,
+        image5,
+        image6,
+        image7,
+        image8,
+        image9,
+      }
+      // { transaction: t }
+    );
+
+    await ProductItem.update(
+      { imagesId: productImages.id },
+      { where: { id: productId } }
+      // { transaction: t }
+    );
+
+    // await t.commit();
 
     res.status(201).json({ productImages });
   } catch (err) {
+    // await t.rollback();
     next(err);
   } finally {
     if (req.files) {
