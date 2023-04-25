@@ -8,8 +8,8 @@ const router = express.Router();
 router.use('/category', productCategoryRoute);
 router.use('/search', productSearchRoute);
 
-router.get('/bestbuy', productController.getProductBestBuy);
-router.get('/newproduct', productController.getNewProduct);
+router.get('/sort', productController.getProductSort);
+
 router.get('/:productId', productController.getProductById);
 router.get('/shop/:sellerId', productController.getAllProductBySeller);
 

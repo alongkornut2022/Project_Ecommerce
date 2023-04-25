@@ -4,7 +4,7 @@ const productCategoryController = require('../controllers/productCategoryControl
 const router = express.Router();
 
 router.get('/', productCategoryController.getAllCategory);
-router.get('/bycategoryname', productCategoryController.getProductByCategory);
+router.get('/sort', productCategoryController.getProductByCategory);
 router.get(
   '/sortbestbuy/bycategoryname',
   productCategoryController.getProductByCategorySortAlreadysold

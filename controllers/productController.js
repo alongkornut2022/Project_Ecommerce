@@ -1,44 +1,27 @@
 const { QueryTypes } = require('sequelize');
 const { sequelize } = require('../models');
 
-exports.getProductBestBuy = async (req, res, next) => {
+exports.getProductSort = async (req, res, next) => {
   try {
     const { limit, offset, orderBy } = req.query;
 
     if (limit == '' && offset == '') {
-      const productBestBuy = await sequelize.query(
+      const productSort = await sequelize.query(
         `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , p.created_at createdAt  from (product_item p join product_stock ps on p.stock_id = ps.id)  join product_images pi on p.images_id = pi.id order by ${orderBy} ${limit} ${offset}`,
         {
           type: QueryTypes.SELECT,
         }
       );
-      res.json({ productBestBuy });
+      res.json({ productSort });
     }
 
-    const productBestBuy = await sequelize.query(
+    const productSort = await sequelize.query(
       `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , p.created_at createdAt  from (product_item p join product_stock ps on p.stock_id = ps.id)  join product_images pi on p.images_id = pi.id order by ${orderBy} limit ${limit} offset ${offset}`,
       {
         type: QueryTypes.SELECT,
       }
     );
-    res.json({ productBestBuy });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.getNewProduct = async (req, res, next) => {
-  try {
-    const { limit, orderBy } = req.query;
-
-    const newProduct = await sequelize.query(
-      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , p.created_at createdAt  from (product_item p join product_stock ps on p.stock_id = ps.id) join product_images pi on p.images_id = pi.id order by ${orderBy} ${limit}`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    res.json({ newProduct });
+    res.json({ productSort });
   } catch (err) {
     next(err);
   }
