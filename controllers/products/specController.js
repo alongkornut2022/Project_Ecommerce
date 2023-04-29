@@ -1,65 +1,108 @@
-const { ProductItem, ProductSpec } = require('../../models');
+const fs = require('fs');
 const createError = require('../../utils/createError');
+const { ProductItem, ProductSpec } = require('../../models');
 
 exports.createProductSpec = async (req, res, next) => {
+  let oldSpec;
   try {
     const { productId } = req.params;
-    const { productSpec } = req.body;
 
     if (!req.seller.id) {
       createError('invaild seller', 400);
     }
 
-    const productItem = await ProductItem.findOne({
+    const productItems = await ProductItem.findOne({
       where: { id: productId },
     });
 
-    if (!productItem) {
+    if (productItems === null) {
       createError('invaild product', 400);
     }
 
-    if (productItem.id != productId || req.seller.id != productItem.sellerId) {
+    if (
+      productItems.id != productId ||
+      req.seller.id != productItems.sellerId
+    ) {
       createError('invaild seller or product', 400);
     }
 
-    const productSpecs = await ProductSpec.create({
-      productSpec,
+    if (!req.file) {
+      createError('Product spec is required', 400);
+    }
+
+    oldSpec = await ProductSpec.findOne({
+      where: { id: productItems.specId },
+      attributes: {
+        exclude: ['id'],
+      },
     });
+
+    const productSpecs = await ProductSpec.create({
+      productSpec: req.file.path,
+    });
+
+    await ProductItem.update(
+      { specId: productSpecs.id },
+      { where: { id: productId } }
+    );
 
     res.status(201).json({ productSpecs: productSpecs });
   } catch (err) {
     next(err);
+  } finally {
+    if (oldSpec) {
+      fs.unlinkSync(oldSpec.productSpec);
+    }
   }
 };
 
 exports.updateProductSpec = async (req, res, next) => {
+  let oldSpec;
   try {
     const { productId } = req.params;
-    const { productSpec } = req.body;
 
     if (!req.seller.id) {
       createError('invaild seller', 400);
     }
 
-    const productItem = await ProductItem.findOne({
+    const productItems = await ProductItem.findOne({
       where: { id: productId },
     });
 
-    if (!productItem) {
+    if (productItems === null) {
       createError('invaild product', 400);
     }
 
-    if (productItem.id != productId || req.seller.id != productItem.sellerId) {
+    if (
+      productItems.id != productId ||
+      req.seller.id != productItems.sellerId
+    ) {
       createError('seller or product is incorrect', 400);
     }
 
+    if (!req.file) {
+      createError('Product spec is required', 400);
+    }
+
+    oldSpec = await ProductSpec.findOne({
+      where: { id: productItems.specId },
+      attributes: {
+        exclude: ['id'],
+      },
+    });
+
     await ProductSpec.update(
-      { productSpec },
-      { where: { id: productItem.specId } }
+      { productSpec: req.file.path },
+      { where: { id: productItems.specId } }
     );
+
     res.json({ message: 'update success' });
   } catch (err) {
     next(err);
+  } finally {
+    if (oldSpec) {
+      fs.unlinkSync(oldSpec.productSpec);
+    }
   }
 };
 
