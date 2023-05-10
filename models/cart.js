@@ -6,9 +6,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      productPrice: {
+      productTotalPrice: {
         type: DataTypes.INTEGER,
         allowNull: false,
+      },
+      productWeightTotal: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
       },
     },
     { tableName: 'cart', underscored: true, timestamps: true }
@@ -33,10 +37,10 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    Cart.belongsTo(models.OrderItem, {
+    Cart.belongsTo(models.Seller, {
       foreignKey: {
-        allowNull: true,
-        name: 'orderItemId',
+        allowNull: false,
+        name: 'sellerId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',

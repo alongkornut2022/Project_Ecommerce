@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
+      productWeightPiece: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
     },
     { tableName: 'product_item', underscored: true, timestamps: true }
   );

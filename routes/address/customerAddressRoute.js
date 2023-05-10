@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post('/:customerId', customerAddressController.createAddress);
 router.get('/:customerId', customerAddressController.getAllAddress);
+router.get('/default/:customerId', customerAddressController.getDefaultAddress);
 router.get(
   '/:customerId/:customerAddressId',
   customerAddressController.getAddressById
@@ -12,6 +13,10 @@ router.get(
 router.patch(
   '/:customerAddressId/:customerId',
   customerAddressController.updateAddress
+);
+router.patch(
+  '/status/:customerAddressId/:customerId',
+  customerAddressController.updateStatus
 );
 router.delete(
   '/:customerAddressId/:customerId',

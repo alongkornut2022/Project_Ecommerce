@@ -51,6 +51,10 @@ module.exports = (sequelize, DataTypes) => {
           notEmpty: true,
         },
       },
+      status: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       tableName: 'customer_address',

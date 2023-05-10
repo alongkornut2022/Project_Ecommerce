@@ -14,16 +14,16 @@ module.exports = (sequelize, DataTypes) => {
     { tableName: 'order_item', underscored: true, timestamps: true }
   );
 
-  OrderItem.associate = (models) => {
-    OrderItem.hasMany(models.Cart, {
-      foreignKey: {
-        allowNull: true,
-        name: 'orderItemId',
-      },
-      onDelete: 'RESTRICT',
-      onUpdate: 'RESTRICT',
-    });
-  };
+  // OrderItem.associate = (models) => {
+  //   OrderItem.hasMany(models.Cart, {
+  //     foreignKey: {
+  //       allowNull: true,
+  //       name: 'orderItemId',
+  //     },
+  //     onDelete: 'RESTRICT',
+  //     onUpdate: 'RESTRICT',
+  //   });
+  // };
 
   return OrderItem;
 };

@@ -62,6 +62,15 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',
     });
+
+    Seller.hasOne(models.Cart, {
+      foreignKey: {
+        allowNull: false,
+        name: 'sellerId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
   };
 
   return Seller;

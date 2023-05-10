@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { CustomerAddress } = require('../models');
 const createError = require('../utils/createError');
 
@@ -19,18 +20,39 @@ exports.createAddress = async (req, res, next) => {
       phoneNumber,
     } = req.body;
 
-    const customerAdderss = await CustomerAddress.create({
-      firstName,
-      lastName,
-      addressDetail,
-      district,
-      province,
-      postcode,
-      phoneNumber,
-      customerId: req.customer.id,
+    const oldAddressDefault = await CustomerAddress.findOne({
+      where: {
+        [Op.and]: [{ customerId: customerId }, { status: 'default' }],
+      },
     });
 
-    res.status(201).json({ customerAdderss: customerAdderss });
+    if (!oldAddressDefault) {
+      const customerAdderss = await CustomerAddress.create({
+        firstName,
+        lastName,
+        addressDetail,
+        district,
+        province,
+        postcode,
+        phoneNumber,
+        customerId: req.customer.id,
+        status: 'default',
+      });
+      res.status(201).json({ customerAdderss: customerAdderss });
+    } else {
+      const customerAdderss = await CustomerAddress.create({
+        firstName,
+        lastName,
+        addressDetail,
+        district,
+        province,
+        postcode,
+        phoneNumber,
+        customerId: req.customer.id,
+        status: 'none',
+      });
+      res.status(201).json({ customerAdderss: customerAdderss });
+    }
   } catch (err) {
     next(err);
   }
@@ -44,10 +66,30 @@ exports.getAllAddress = async (req, res, next) => {
       createError('invaild customer', 400);
     }
 
-    const customerAddress = await CustomerAddress.findAll({
+    const customerAddressAll = await CustomerAddress.findAll({
       where: { customerId: req.customer.id },
     });
-    res.json({ customerAddress: customerAddress });
+    res.json({ customerAddressAll: customerAddressAll });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getDefaultAddress = async (req, res, next) => {
+  try {
+    const { customerId } = req.params;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    const customerAdderssDefault = await CustomerAddress.findOne({
+      where: {
+        [Op.and]: [{ customerId: customerId }, { status: 'default' }],
+      },
+    });
+
+    res.json({ customerAddressDefault: customerAdderssDefault });
   } catch (err) {
     next(err);
   }
@@ -97,6 +139,41 @@ exports.updateAddress = async (req, res, next) => {
         province,
         postcode,
         phoneNumber,
+      },
+      { where: { id: customerAddressId, customerId: req.customer.id } }
+    );
+    res.json({ message: 'update success' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateStatus = async (req, res, next) => {
+  try {
+    const { customerAddressId, customerId } = req.params;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    const oldAddressDefault = await CustomerAddress.findOne({
+      where: {
+        [Op.and]: [{ customerId: customerId }, { status: 'default' }],
+      },
+    });
+
+    if (!oldAddressDefault) {
+      createError('invaild address', 400);
+    }
+
+    await CustomerAddress.update(
+      { status: 'none' },
+      { where: { id: oldAddressDefault.id, customerId: req.customer.id } }
+    );
+
+    await CustomerAddress.update(
+      {
+        status: 'default',
       },
       { where: { id: customerAddressId, customerId: req.customer.id } }
     );

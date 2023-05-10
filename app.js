@@ -12,7 +12,9 @@ const productRoute = require('./routes/productRoute');
 const sellerAuthRoute = require('./routes/sellerAuthRoute');
 const sellerRoute = require('./routes/sellerRoute');
 const addressRoute = require('./routes/addressRoute');
+const cartRoute = require('./routes/cartRoute');
 const PurchaseRoute = require('./routes/PurchaseRoute');
+const DeliveryRoute = require('./routes/deliveryRoute');
 
 const notFoundMiddleware = require('./middlewares/notFound');
 const errormiddleware = require('./middlewares/error');
@@ -37,9 +39,11 @@ app.use('/sellers/products', sellerAuthenticate, sellerProductRoute);
 
 app.use('/address', addressRoute);
 
-app.use('/products/', productRoute);
+app.use('/products', productRoute);
 
+app.use('/cart', customerAuthenticate, cartRoute);
 app.use('/Purchase', customerAuthenticate, PurchaseRoute);
+app.use('/delivery', customerAuthenticate, DeliveryRoute);
 
 app.use(notFoundMiddleware);
 app.use(errormiddleware);
