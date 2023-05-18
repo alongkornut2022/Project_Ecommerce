@@ -1,13 +1,142 @@
-const { QueryTypes, Op } = require('sequelize');
+const { Op } = require('sequelize');
 const {
-  ProductItem,
-  Cart,
   PostcodeProvince,
   ShippingRatesStandard,
   ShippingRatesEms,
-  sequelize,
+  Delivery,
 } = require('../models');
 const createError = require('../utils/createError');
+
+exports.createDelivery = async (req, res, next) => {
+  try {
+    const { sellerId, customerId } = req.params;
+    const { optionDelivery, deliveryPrice, cartIdsBySellers } = req.body;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    // -------------------------------------//
+    // const findCartIds = await Delivery.findOne({
+    //   where: { cartIds: cartIdsBySellers },
+    // });
+
+    // if (findCartIds === null) {
+    //   const deliverys = await Delivery.create({
+    //     sellerId,
+    //     deliveryOption: optionDelivery,
+    //     deliveryPrice,
+    //     cartIds: cartIdsBySellers,
+    //   });
+
+    //   res.json({ deliverys });
+    // }
+
+    // res.json({ message: 'data exist' });
+
+    // -------------------------------------//
+
+    const cartIdsBySellersStr = cartIdsBySellers.split(',');
+
+    for (let item of cartIdsBySellersStr) {
+      const findCartId = await Delivery.findAll({
+        where: { cartIds: { [Op.substring]: `${item}` } },
+      });
+
+      if (findCartId) {
+        for (let item of findCartId) {
+          await Delivery.destroy({
+            where: { id: item.dataValues.id },
+          });
+        }
+      }
+    }
+    // -------------------------------------//
+
+    const deliverys = await Delivery.create({
+      sellerId,
+      deliveryOption: optionDelivery,
+      deliveryPrice,
+      cartIds: cartIdsBySellers,
+    });
+
+    res.json({ deliverys });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateDelivery = async (req, res, next) => {
+  try {
+    const { cartIdsBySeller, customerId } = req.params;
+    const { optionDelivery, deliveryPrice } = req.body;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    const findCartIdsBySeller = await Delivery.findOne({
+      where: { cartIds: cartIdsBySeller },
+    });
+
+    if (findCartIdsBySeller === null) {
+      res.json({ message: 'is not data' });
+    }
+
+    const deliverys = await Delivery.update(
+      {
+        deliveryOption: optionDelivery,
+        deliveryPrice,
+      },
+      { where: { cartIds: cartIdsBySeller } }
+    );
+
+    res.json({ message: 'update success' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getDeliveryPrice = async (req, res, next) => {
+  try {
+    const { cartIds, customerId } = req.params;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    const newCartIds = cartIds.split(',');
+
+    const deliveryItem = [];
+    for (let item of newCartIds) {
+      let i = await Delivery.findOne({
+        where: { cartIds: { [Op.substring]: `${item}` } },
+      });
+      deliveryItem.push(i);
+    }
+
+    const deliveryIds = deliveryItem.map((item) => item.dataValues.id);
+
+    const newDeliveryIds = [...new Set(deliveryIds)];
+
+    const deliverys = [];
+    for (let item of newDeliveryIds) {
+      let i = await Delivery.findOne({ where: { id: item } });
+      deliverys.push(i);
+    }
+
+    // console.log(deliverys);
+
+    const deliveryPrice = deliverys.reduce(
+      (acc, item) => acc + item.dataValues.deliveryPrice,
+      0
+    );
+
+    res.json({ deliveryPrice });
+  } catch (err) {
+    next(err);
+  }
+};
 
 exports.getPostcodeZone = async (req, res, next) => {
   try {
@@ -37,10 +166,6 @@ exports.getShippingRate = async (req, res, next) => {
   try {
     const { customerId } = req.params;
     const { shippingOption, area, weight } = req.query;
-
-    // console.log(shippingOption);
-    // console.log(area);
-    // console.log(weight);
 
     if (req.customer.id != customerId) {
       createError('invaild customer', 400);

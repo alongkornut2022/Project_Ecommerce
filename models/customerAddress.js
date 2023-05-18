@@ -73,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    CustomerAddress.hasOne(models.OrderTotal, {
+    CustomerAddress.hasOne(models.OrderDetail, {
       foreignKey: {
         allowNull: false,
         name: 'customerAddressId',

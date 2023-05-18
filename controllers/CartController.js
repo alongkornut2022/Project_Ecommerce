@@ -87,8 +87,6 @@ exports.getCartBySeller = async (req, res, next) => {
 
     const newCartIds = cartIds.split(',');
 
-    // console.log(newCartIds);
-
     if (req.customer.id != customerId) {
       createError('invaild customer', 400);
     }
@@ -104,7 +102,6 @@ exports.getCartBySeller = async (req, res, next) => {
       );
       cartBySeller.push(cart[0]);
     }
-    // console.log(cartBySeller);
 
     const productTotalPrice = cartBySeller.map(
       (item) => item.productTotalPrice
@@ -112,17 +109,15 @@ exports.getCartBySeller = async (req, res, next) => {
 
     const newCartSeller = cartBySeller.map((item) => item.sellerId);
 
-    // console.log(newCartSeller);
+    const cartSellerIds = [...new Set(newCartSeller)];
 
-    const cartSellerIds = [];
-    cartSellerIds.push(newCartSeller[0]);
-    const compareNum = (a, b) => {
-      if (a !== b) cartSellerIds.push(newCartSeller[b]);
-      if (a === b) newCartSeller.splice(newCartSeller[b], 1);
-    };
-    newCartSeller.sort(compareNum);
-
-    // console.log(cartSellerIds);
+    // const cartSellerIds = [];
+    // cartSellerIds.push(newCartSeller[0]);
+    // const compareNum = (a, b) => {
+    //   if (a !== b) cartSellerIds.push(newCartSeller[b]);
+    //   if (a === b) newCartSeller.splice(newCartSeller[b], 1);
+    // };
+    // newCartSeller.sort(compareNum);
 
     const sellers = [];
     for (let item of cartSellerIds) {
@@ -135,10 +130,10 @@ exports.getCartBySeller = async (req, res, next) => {
       sellers.push(seller[0]);
     }
 
-    // console.log(sellers);
-
     res.json({ sellers, productTotalPrice });
-  } catch (err) {}
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.getCartCheckout = async (req, res, next) => {

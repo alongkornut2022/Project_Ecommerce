@@ -56,9 +56,27 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
-    Customer.hasMany(models.Cart, {
+    Customer.hasOne(models.Cart, {
       foreignKey: {
         allowNull: false,
+        name: 'customerId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Customer.hasOne(models.OrderDetail, {
+      foreignKey: {
+        allowNull: false,
+        name: 'customerId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    Customer.hasOne(models.OrderItem, {
+      foreignKey: {
+        allowNull: true,
         name: 'customerId',
       },
       onDelete: 'RESTRICT',
