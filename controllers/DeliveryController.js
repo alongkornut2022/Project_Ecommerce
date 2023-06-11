@@ -9,8 +9,8 @@ const createError = require('../utils/createError');
 
 exports.createDelivery = async (req, res, next) => {
   try {
-    const { sellerId, customerId } = req.params;
-    const { optionDelivery, deliveryPrice, cartIdsBySellers } = req.body;
+    const { sellerId, customerId, cartIdsBySellers } = req.params;
+    const { optionDelivery, deliveryPrice } = req.body;
 
     if (req.customer.id != customerId) {
       createError('invaild customer', 400);
@@ -179,9 +179,16 @@ exports.getShippingRate = async (req, res, next) => {
       createError('invaild data', 400);
     }
 
+    if (shippingOption === 'เลือกประเภทการส่ง') {
+      const deliveryPrice = 0;
+      res.json({ deliveryPrice: deliveryPrice });
+    }
+
     let newWeight = 0;
     if (weight <= 0 || weight === undefined || weight === null) {
-      createError('invaild weight', 400);
+      // createError('invaild weight', 400);
+      const deliveryPrice = 0;
+      res.json({ deliveryPrice: deliveryPrice });
     } else if (weight > 0 && weight <= 1000) {
       newWeight = 1000;
     } else if (weight > 1000 && weight <= 2000) {
@@ -256,5 +263,27 @@ exports.getShippingRate = async (req, res, next) => {
     }
   } catch (err) {
     next(err);
+  }
+};
+
+exports.getDeliveryCartIds = async (req, res, next) => {
+  try {
+    const { cartIdsBySeller, customerId } = req.params;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    const delivery = await Delivery.findOne({
+      where: { cartIds: cartIdsBySeller },
+    });
+
+    const deliveryCartIds = delivery.dataValues.cartIds;
+
+    console.log(deliveryCartIds);
+
+    res.json({ deliveryCartIds });
+  } catch (err) {
+    console.log(err);
   }
 };

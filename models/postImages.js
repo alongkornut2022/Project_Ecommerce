@@ -4,7 +4,7 @@ module.exports = (sequelize, Datatypes) => {
     {
       image1: {
         type: Datatypes.STRING,
-        allowNull: true,
+        allowNull: false,
       },
       image2: {
         type: Datatypes.STRING,
@@ -18,19 +18,15 @@ module.exports = (sequelize, Datatypes) => {
         type: Datatypes.STRING,
         allowNull: true,
       },
-      image5: {
-        type: Datatypes.STRING,
-        allowNull: true,
-      },
     },
     { tableName: 'post_images', underscored: true, timestamps: false }
   );
 
   PostImages.associate = (models) => {
-    PostImages.hasOne(models.PostReview, {
+    PostImages.hasOne(models.ProductRating, {
       foreignKey: {
         allowNull: true,
-        name: 'postImagestId',
+        name: 'postImagesId',
       },
       onDelete: 'RESTRICT',
       onUpdate: 'RESTRICT',

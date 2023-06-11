@@ -32,6 +32,15 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'RESTRICT',
     });
 
+    OrderDetail.hasOne(models.ProductRating, {
+      foreignKey: {
+        allowNull: false,
+        name: 'orderDetailId',
+      },
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
     OrderDetail.belongsTo(models.Seller, {
       foreignKey: {
         allowNull: false,

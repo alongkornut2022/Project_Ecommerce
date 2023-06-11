@@ -2,16 +2,16 @@ module.exports = (sequelize, Datatypes) => {
   const Comment = sequelize.define(
     'Comment',
     {
-      title: {
+      comment: {
         type: Datatypes.STRING,
-        allowNull: true,
+        allowNull: false,
       },
     },
     { tableName: 'comment', underscored: true, timestamps: true }
   );
 
   Comment.associate = (models) => {
-    Comment.hasOne(models.PostReview, {
+    Comment.hasOne(models.ProductRating, {
       foreignKey: {
         allowNull: true,
         name: 'commentId',

@@ -87,7 +87,6 @@ exports.getProductSearch = async (req, res, next) => {
 
       if (categorySearch !== 'หมวดหมู่ทั้งหมด') {
         resultSearch = await sequelize.query(
-          // `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , pc.category_name categoryName, p.created_at createdAt  from ((product_item p join product_stock ps on p.stock_id = ps.id)  join product_images pi on p.images_id = pi.id) join product_category pc on p.category_id = pc.id where ${resultKeyword} having ${resultCategoryName} order by p.product_name desc `,
           `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , pc.category_name categoryName, p.created_at createdAt  from ((product_item p join product_stock ps on p.stock_id = ps.id)  join product_images pi on p.images_id = pi.id) join product_category pc on p.category_id = pc.id where ${resultKeyword} having ${resultCategoryName} order by ${orderBy} limit ${limit} offset ${offset}`,
           {
             type: QueryTypes.SELECT,

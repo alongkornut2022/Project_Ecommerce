@@ -12,7 +12,11 @@ module.exports = (sequelize, DataTypes) => {
       },
       cartIds: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
+      },
+      status: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     { tableName: 'delivery', underscored: true, timestamps: true }

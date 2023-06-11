@@ -7,11 +7,15 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       productUnitprice: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
+      discounts: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       productWeightPiece: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
     },
