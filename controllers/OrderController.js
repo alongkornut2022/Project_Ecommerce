@@ -43,12 +43,23 @@ exports.createOrder = async (req, res, next) => {
         });
 
         if (cartItem) {
+          const productItem = await sequelize.query(
+            `select p.product_unitprice productUnitPrice, dis.discounts discounts from product_item p left join discounts dis on p.discounts_id = dis.id where p.id = ${cartItem.dataValues.productId} ;`,
+            {
+              type: QueryTypes.SELECT,
+            }
+          );
+
+          console.log(productItem);
+
           orderItems = await OrderItem.create({
             cartId: cartItem.dataValues.id,
             orderDetailId: orderDetails.dataValues.id,
             productId: cartItem.dataValues.productId,
             customerId: customerId,
             amount: cartItem.dataValues.amount,
+            productUnitPrice: productItem[0].productUnitPrice,
+            discounts: productItem[0].discounts,
             productItemTotalPrice: cartItem.dataValues.productTotalPrice,
             productWeightTotal: cartItem.dataValues.productWeightTotal,
           });
@@ -130,6 +141,14 @@ exports.getOrderDetail = async (req, res, next) => {
         }
       );
       res.json({ orderCustomer });
+    } else if (status === 'ชำระเงินแล้ว') {
+      const orderCustomer = await sequelize.query(
+        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') order by od.created_at desc;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ orderCustomer });
     } else {
       const orderCustomer = await sequelize.query(
         `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.status = '${status}' order by od.created_at desc;`,
@@ -154,7 +173,7 @@ exports.getOrderItem = async (req, res, next) => {
 
     const orderItem = await sequelize.query(
       // `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.product_id productId, pi.product_name productName, pim.image1 image, oi.product_item_total_price productItemTotalPrice from (order_item oi left join product_item pi on oi.product_id = pi.id) left join product_images pim on pi.images_id = pim.id where oi.order_detail_id = ${orderDetailId};`,
-      `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.product_id productId, pi.product_name productName, pi.product_unitprice productUnitPrice, oi.amount amount, pim.image1 image, oi.product_item_total_price productItemTotalPrice, oi.customer_id customerId, c.username username, c.user_picture userPicture, oi.created_at createdAt  from ((order_item oi left join product_item pi on oi.product_id = pi.id) left join product_images pim on pi.images_id = pim.id) left join customer c on oi.customer_id = c.id where oi.order_detail_id = ${orderDetailId};`,
+      `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.product_id productId, pi.product_name productName, pi.product_unitprice productUnitPrice, oi.amount amount, pim.image1 image, oi.product_unit_price productUnitPrice, oi.discounts discounts, oi.product_item_total_price productItemTotalPrice, oi.customer_id customerId, c.username username, c.user_picture userPicture, oi.created_at createdAt  from ((order_item oi left join product_item pi on oi.product_id = pi.id) left join product_images pim on pi.images_id = pim.id) left join customer c on oi.customer_id = c.id where oi.order_detail_id = ${orderDetailId};`,
       {
         type: QueryTypes.SELECT,
       }
@@ -209,13 +228,6 @@ exports.getSearchOrder = async (req, res, next) => {
       }
       res.json({ orderCustomer: orderCustomer2 });
     }
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.updateOrder = async (req, res, next) => {
-  try {
   } catch (err) {
     next(err);
   }

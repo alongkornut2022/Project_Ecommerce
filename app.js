@@ -6,8 +6,6 @@ const morgan = require('morgan');
 const authRoute = require('./routes/authRoute');
 const customerRoute = require('./routes/customerRoute');
 const sellerProductRoute = require('./routes/products/sellerProductRoute');
-const categoryRoute = require('./routes/products/categoryRoute');
-const stockRoute = require('./routes/products/stockRoute');
 const productRoute = require('./routes/productRoute');
 const sellerAuthRoute = require('./routes/sellerAuthRoute');
 const sellerRoute = require('./routes/sellerRoute');
@@ -16,6 +14,8 @@ const cartRoute = require('./routes/cartRoute');
 const PurchaseRoute = require('./routes/PurchaseRoute');
 const DeliveryRoute = require('./routes/deliveryRoute');
 const PostRoute = require('./routes/postRoute');
+const carouselRoute = require('./routes/carouselRoute');
+const sellerOrderRoute = require('./routes/sellerOrderRoute');
 
 const notFoundMiddleware = require('./middlewares/notFound');
 const errormiddleware = require('./middlewares/error');
@@ -37,10 +37,12 @@ app.use('/customers', customerAuthenticate, customerRoute);
 app.use('/sellers', sellerAuthRoute);
 app.use('/sellers', sellerAuthenticate, sellerRoute);
 app.use('/sellers/products', sellerAuthenticate, sellerProductRoute);
+app.use('/sellers/order', sellerAuthenticate, sellerOrderRoute);
 
 app.use('/address', addressRoute);
 
 app.use('/products', productRoute);
+app.use('/carousel', carouselRoute);
 
 app.use('/cart', customerAuthenticate, cartRoute);
 app.use('/Purchase', customerAuthenticate, PurchaseRoute);

@@ -10,12 +10,17 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      discounts: {
+
+      productWeightPiece: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      productWeightPiece: {
-        type: DataTypes.INTEGER,
+      carouselStatus: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      productStatus: {
+        type: DataTypes.STRING,
         allowNull: true,
       },
     },
@@ -92,6 +97,15 @@ module.exports = (sequelize, DataTypes) => {
         name: 'productId',
       },
       onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
+    });
+
+    ProductItem.belongsTo(models.Discounts, {
+      foreignKey: {
+        allowNull: true,
+        name: 'discountsId',
+      },
+      onDelete: 'SET NULL',
       onUpdate: 'RESTRICT',
     });
   };

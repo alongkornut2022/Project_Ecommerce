@@ -67,17 +67,374 @@ exports.createProduct = async (req, res, next) => {
 
 exports.getAllProductBySeller = async (req, res, next) => {
   try {
-    if (!req.seller.id) {
+    const { sellerId } = req.params;
+    const { status } = req.query;
+
+    if (!req.seller) {
+      createError('is not seller', 400);
+    }
+
+    if (!req.seller.id === sellerId) {
       createError('invaild seller', 400);
     }
 
-    const productSeller = await sequelize.query(
-      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, pi.image2, pi.image3, pi.image4, pi.image5, pi.image6, pi.image7, pi.image8, pi.image9 from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id}`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    res.json({ productSeller: productSeller });
+    if (status === 'ทั้งหมด') {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} order by p.updated_at desc  ;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    } else {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.product_status = '${status}' order by p.updated_at desc  ;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSearchProductBySeller = async (req, res, next) => {
+  try {
+    const { sellerId } = req.params;
+    const { keyword, navBar } = req.query;
+
+    if (!req.seller) {
+      createError('is not seller', 400);
+    }
+
+    if (!req.seller.id === sellerId) {
+      createError('invaild seller', 400);
+    }
+
+    if (navBar === 'ทั้งหมด') {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.product_name like '%${keyword}%' order by p.updated_at desc  ;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    } else {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.product_name like '%${keyword}%' and p.product_status = '${navBar}' order by p.updated_at desc  ;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSearchMultiChoiceProductBySeller = async (req, res, next) => {
+  try {
+    const { sellerId } = req.params;
+    const {
+      navBar,
+      productName,
+      selectCategory,
+      priceStart,
+      priceTo,
+      stockstartStart,
+      stockstartTo,
+      inventoryStart,
+      inventoryTo,
+      alreadysoldStart,
+      alreadysoldTo,
+    } = req.query;
+
+    if (!req.seller) {
+      createError('is not seller', 400);
+    }
+
+    if (!req.seller.id === sellerId) {
+      createError('invaild seller', 400);
+    }
+
+    let opProductName;
+    let opCategory;
+    let opPrice;
+    let opStockstart;
+    let opInventory;
+    let opAlreadysold;
+
+    if (productName === '') {
+      opProductName = ' ';
+    } else {
+      opProductName =
+        'and p.product_name like' +
+        ' ' +
+        "'" +
+        '%' +
+        productName +
+        '%' +
+        "'" +
+        ' ';
+    }
+
+    if (selectCategory === 'หมวดหมู่ทั้งหมด') {
+      opCategory = ' ';
+    } else if (selectCategory != 'หมวดหมู่ทั้งหมด') {
+      opCategory =
+        'and cat.category_name =' + ' ' + "'" + selectCategory + "'" + ' ';
+    }
+
+    if (priceStart === '' && priceTo === '') {
+      opPrice = ' ';
+    } else if (priceStart != '' && priceTo === '') {
+      opPrice = 'and p.product_unitprice =' + ' ' + priceStart;
+    } else if (priceStart === '' && priceTo != '') {
+      opPrice = 'and p.product_unitprice =' + ' ' + priceTo;
+    } else if (priceStart != '' && priceTo != '') {
+      opPrice =
+        ' ' +
+        'and p.product_unitprice between' +
+        ' ' +
+        priceStart +
+        ' ' +
+        'and' +
+        ' ' +
+        priceTo +
+        ' ';
+    }
+
+    if (stockstartStart === '' && stockstartTo === '') {
+      opStockstart = ' ';
+    } else if (stockstartStart != '' && stockstartTo === '') {
+      opStockstart = 'and ps.stock_start =' + ' ' + stockstartStart;
+    } else if (stockstartStart === '' && stockstartTo != '') {
+      opStockstart = 'and ps.stock_start =' + ' ' + stockstartTo;
+    } else if (stockstartStart != '' && stockstartTo != '') {
+      opStockstart =
+        ' ' +
+        'and ps.stock_start between' +
+        ' ' +
+        stockstartStart +
+        ' ' +
+        'and' +
+        ' ' +
+        stockstartTo +
+        ' ';
+    }
+
+    if (inventoryStart === '' && inventoryTo === '') {
+      opInventory = ' ';
+    } else if (inventoryStart != '' && inventoryTo === '') {
+      opInventory = 'and ps.inventory =' + ' ' + inventoryStart;
+    } else if (inventoryStart === '' && inventoryTo != '') {
+      opInventory = 'and ps.inventory =' + ' ' + inventoryTo;
+    } else if (inventoryStart != '' && inventoryTo != '') {
+      opInventory =
+        ' ' +
+        'and ps.inventory between' +
+        ' ' +
+        inventoryStart +
+        ' ' +
+        'and' +
+        ' ' +
+        inventoryTo +
+        ' ';
+    }
+
+    if (alreadysoldStart === '' && alreadysoldTo === '') {
+      opAlreadysold = ' ';
+    } else if (alreadysoldStart != '' && alreadysoldTo === '') {
+      opAlreadysold = 'and ps.alreadysold =' + ' ' + alreadysoldStart;
+    } else if (alreadysoldStart === '' && alreadysoldTo != '') {
+      opAlreadysold = 'and ps.alreadysold =' + ' ' + alreadysoldTo;
+    } else if (alreadysoldStart != '' && alreadysoldTo != '') {
+      opAlreadysold =
+        ' ' +
+        'and ps.alreadysold between' +
+        ' ' +
+        alreadysoldStart +
+        ' ' +
+        'and' +
+        ' ' +
+        alreadysoldTo +
+        ' ';
+    }
+
+    if (navBar === 'ทั้งหมด') {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold}  order by p.updated_at desc  ;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    } else {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} and p.product_status = '${navBar}'  ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold} order by p.updated_at desc  ;`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSortProductBySeller = async (req, res, next) => {
+  try {
+    const { sellerId } = req.params;
+    const {
+      navBar,
+      productName,
+      selectCategory,
+      priceStart,
+      priceTo,
+      stockstartStart,
+      stockstartTo,
+      inventoryStart,
+      inventoryTo,
+      alreadysoldStart,
+      alreadysoldTo,
+      sort,
+    } = req.query;
+
+    if (!req.seller) {
+      createError('is not seller', 400);
+    }
+
+    if (!req.seller.id === sellerId) {
+      createError('invaild seller', 400);
+    }
+
+    let opProductName;
+    let opCategory;
+    let opPrice;
+    let opStockstart;
+    let opInventory;
+    let opAlreadysold;
+
+    if (productName === '') {
+      opProductName = ' ';
+    } else {
+      opProductName =
+        'and p.product_name like' +
+        ' ' +
+        "'" +
+        '%' +
+        productName +
+        '%' +
+        "'" +
+        ' ';
+    }
+
+    if (selectCategory === 'หมวดหมู่ทั้งหมด') {
+      opCategory = ' ';
+    } else if (selectCategory != 'หมวดหมู่ทั้งหมด') {
+      opCategory =
+        'and cat.category_name =' + ' ' + "'" + selectCategory + "'" + ' ';
+    }
+
+    if (priceStart === '' && priceTo === '') {
+      opPrice = ' ';
+    } else if (priceStart != '' && priceTo === '') {
+      opPrice = 'and p.product_unitprice =' + ' ' + priceStart;
+    } else if (priceStart === '' && priceTo != '') {
+      opPrice = 'and p.product_unitprice =' + ' ' + priceTo;
+    } else if (priceStart != '' && priceTo != '') {
+      opPrice =
+        ' ' +
+        'and p.product_unitprice between' +
+        ' ' +
+        priceStart +
+        ' ' +
+        'and' +
+        ' ' +
+        priceTo +
+        ' ';
+    }
+
+    if (stockstartStart === '' && stockstartTo === '') {
+      opStockstart = ' ';
+    } else if (stockstartStart != '' && stockstartTo === '') {
+      opStockstart = 'and ps.stock_start =' + ' ' + stockstartStart;
+    } else if (stockstartStart === '' && stockstartTo != '') {
+      opStockstart = 'and ps.stock_start =' + ' ' + stockstartTo;
+    } else if (stockstartStart != '' && stockstartTo != '') {
+      opStockstart =
+        ' ' +
+        'and ps.stock_start between' +
+        ' ' +
+        stockstartStart +
+        ' ' +
+        'and' +
+        ' ' +
+        stockstartTo +
+        ' ';
+    }
+
+    if (inventoryStart === '' && inventoryTo === '') {
+      opInventory = ' ';
+    } else if (inventoryStart != '' && inventoryTo === '') {
+      opInventory = 'and ps.inventory =' + ' ' + inventoryStart;
+    } else if (inventoryStart === '' && inventoryTo != '') {
+      opInventory = 'and ps.inventory =' + ' ' + inventoryTo;
+    } else if (inventoryStart != '' && inventoryTo != '') {
+      opInventory =
+        ' ' +
+        'and ps.inventory between' +
+        ' ' +
+        inventoryStart +
+        ' ' +
+        'and' +
+        ' ' +
+        inventoryTo +
+        ' ';
+    }
+
+    if (alreadysoldStart === '' && alreadysoldTo === '') {
+      opAlreadysold = ' ';
+    } else if (alreadysoldStart != '' && alreadysoldTo === '') {
+      opAlreadysold = 'and ps.alreadysold =' + ' ' + alreadysoldStart;
+    } else if (alreadysoldStart === '' && alreadysoldTo != '') {
+      opAlreadysold = 'and ps.alreadysold =' + ' ' + alreadysoldTo;
+    } else if (alreadysoldStart != '' && alreadysoldTo != '') {
+      opAlreadysold =
+        ' ' +
+        'and ps.alreadysold between' +
+        ' ' +
+        alreadysoldStart +
+        ' ' +
+        'and' +
+        ' ' +
+        alreadysoldTo +
+        ' ';
+    }
+
+    if (navBar === 'ทั้งหมด') {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold}  order by ${sort}  ;`,
+
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    } else {
+      const productSeller = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} and p.product_status = '${navBar}'  ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold} order by ${sort}  ;`,
+
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSeller: productSeller });
+    }
   } catch (err) {
     next(err);
   }

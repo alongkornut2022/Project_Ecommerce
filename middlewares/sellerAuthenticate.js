@@ -9,13 +9,13 @@ module.exports = async (req, res, next) => {
       createError('you are unauthorized', 401);
     }
 
-    const [, token] = authorization.split(' ');
-    if (!token) {
+    const [, tokenSeller] = authorization.split(' ');
+    if (!tokenSeller) {
       createError('you are unauthorized', 401);
     }
 
     const secretKey = process.env.JWT_SECRET_KEY;
-    const decodedPayload = jwt.verify(token, secretKey);
+    const decodedPayload = jwt.verify(tokenSeller, secretKey);
 
     const seller = await Seller.findOne({
       where: { id: decodedPayload.id },

@@ -56,9 +56,9 @@ exports.register = async (req, res, next) => {
 
     const secretKey = process.env.JWT_SECRET_KEY;
 
-    const token = jwt.sign(payload, secretKey, { expiresIn: '30d' });
+    const tokenSeller = jwt.sign(payload, secretKey, { expiresIn: '30d' });
 
-    res.json({ message: 'register success', token });
+    res.json({ message: 'register success', tokenSeller });
   } catch (err) {
     next(err);
   }
@@ -96,9 +96,9 @@ exports.login = async (req, res, next) => {
 
       const secretKey = process.env.JWT_SECRET_KEY;
 
-      const token = jwt.sign(payload, secretKey, { expiresIn: '30d' });
+      const tokenSeller = jwt.sign(payload, secretKey, { expiresIn: '30d' });
 
-      res.json({ message: 'login success', token });
+      res.json({ message: 'login success', tokenSeller });
     }
 
     if (isNumeric(emailOrPhoneNumber)) {
@@ -121,8 +121,8 @@ exports.login = async (req, res, next) => {
 
       const secretKey = process.env.JWT_SECRET_KEY;
 
-      const token = jwt.sign(payload, secretKey, { expiresIn: '30d' });
-      res.json({ message: 'login success', token });
+      const tokenSeller = jwt.sign(payload, secretKey, { expiresIn: '30d' });
+      res.json({ message: 'login success', tokenSeller });
     }
   } catch (err) {
     next(err);

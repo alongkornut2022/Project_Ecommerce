@@ -45,11 +45,15 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       phoneNumber: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notEmpty: true,
         },
+      },
+      status: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {

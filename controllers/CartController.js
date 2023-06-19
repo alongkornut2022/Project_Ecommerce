@@ -1,5 +1,11 @@
 const { QueryTypes, Op } = require('sequelize');
-const { ProductItem, Cart, Seller, sequelize } = require('../models');
+const {
+  ProductItem,
+  Cart,
+  Seller,
+  Discounts,
+  sequelize,
+} = require('../models');
 const createError = require('../utils/createError');
 
 exports.createCart = async (req, res, next) => {
@@ -7,8 +13,8 @@ exports.createCart = async (req, res, next) => {
     const { productId, customerId } = req.params;
     const {
       amount,
-      productTotalPrice,
-      productUnitprice,
+      // productTotalPrice,
+      // productUnitprice,
       productWeightTotal,
       sellerId,
     } = req.body;
@@ -22,6 +28,25 @@ exports.createCart = async (req, res, next) => {
       createError('invaild product', 400);
     }
 
+    let newProductUnitprice;
+    let discounts;
+    if (products.dataValues.discountsId === null) {
+      newProductUnitprice = products.dataValues.productUnitprice;
+    } else {
+      discounts = await Discounts.findOne({
+        where: { id: products.dataValues.discountsId },
+      });
+      newProductUnitprice =
+        products.dataValues.productUnitprice -
+        Math.floor(
+          (products.dataValues.productUnitprice *
+            discounts.dataValues.discounts) /
+            100
+        );
+    }
+
+    const productTotalPrice = newProductUnitprice * amount;
+
     const checkCart = await Cart.findOne({
       where: {
         [Op.and]: [{ customerId: customerId }, { productId: productId }],
@@ -33,7 +58,7 @@ exports.createCart = async (req, res, next) => {
     let addProductWeightTotal = 0;
     if (checkCart) {
       addAmount = +checkCart.amount + amount;
-      addProductTotalPrice = productUnitprice * addAmount;
+      addProductTotalPrice = newProductUnitprice * addAmount;
       addProductWeightTotal = productWeightTotal * addAmount;
       await Cart.update(
         {
@@ -69,7 +94,7 @@ exports.getAllCart = async (req, res, next) => {
     }
 
     const carts = await sequelize.query(
-      `select c.id cartId, c.customer_id customerId, c.product_id productId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, p.seller_id sellerId, s.shop_name shopName, ps.id stockId, ps.inventory inventory, c.created_at createdAt from (((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id )left join seller s on p.seller_id = s.id  where c.customer_id = ${customerId} `,
+      `select c.id cartId, c.customer_id customerId, c.product_id productId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, p.seller_id sellerId, s.shop_name shopName, ps.id stockId, ps.inventory inventory, c.created_at createdAt, dis.id discountsId, dis.discounts discounts from ((((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id )left join seller s on p.seller_id = s.id) left join discounts dis on p.discounts_id = dis.id  where c.customer_id = ${customerId} `,
       {
         type: QueryTypes.SELECT,
       }
@@ -148,7 +173,7 @@ exports.getCartCheckout = async (req, res, next) => {
     const cartCheckout = [];
     for (let item of newCartIds) {
       const cart = await sequelize.query(
-        `select c.id cartId, c.customer_id customerId, c.product_id productId, c.seller_id sellerId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, ps.id stockId, ps.inventory inventory, c.created_at createdAt from ((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id  where c.customer_id = ${customerId} and c.id = ${item} and c.seller_id = ${sellerId}`,
+        `select c.id cartId, c.customer_id customerId, c.product_id productId, c.seller_id sellerId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, ps.id stockId, ps.inventory inventory, c.created_at createdAt, dis.discounts discounts from (((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id) left join discounts dis on p.discounts_id = dis.id  where c.customer_id = ${customerId} and c.id = ${item} and c.seller_id = ${sellerId}`,
         {
           type: QueryTypes.SELECT,
         }
