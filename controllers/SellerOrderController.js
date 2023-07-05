@@ -123,78 +123,45 @@ exports.getSearchOrder = async (req, res, next) => {
     } else if (navBar === 'ชำระเงินแล้ว') {
       opNavBar = ` and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') `;
     } else {
-      opNavBar = 'and od.status =' + ' ' + "'" + navBar + "'" + ' ';
+      opNavBar = ` and od.status = '${navBar}' `;
     }
 
     if (orderNumber === '') {
       opOrderNumber = ' ';
     } else {
-      opOrderNumber = 'and od.id =' + ' ' + orderNumber + ' ';
+      opOrderNumber = ` and od.id like '%${orderNumber}%' `;
     }
 
     if (productName === '') {
       opProductName = ' ';
     } else {
-      opProductName =
-        'and pi.product_name like' +
-        ' ' +
-        "'" +
-        '%' +
-        productName +
-        '%' +
-        "'" +
-        ' ';
+      opProductName = ` and pi.product_name like '%${productName}%' `;
     }
 
     if (customer === '') {
       opCustomer = ' ';
     } else {
-      opCustomer = 'and cus.username like' + ' ' + "'" + customer + "'" + ' ';
+      opCustomer = ` and cus.username like '%${customer}%' `;
     }
 
     if (orderDateStart === '' && orderDateTo === '') {
       opOrderDate = ' ';
     } else if (orderDateStart != '' && orderDateTo === '') {
-      opOrderDate =
-        'and od.created_at like' + ' ' + "'" + '%' + orderDateStart + '%' + "'";
+      opOrderDate = ` and od.created_at like '%${orderDateStart}%' `;
     } else if (orderDateStart === '' && orderDateTo != '') {
-      opOrderDate =
-        'and od.created_at like' + ' ' + "'" + '%' + orderDateTo + '%' + "'";
+      opOrderDate = `and od.created_at like '%${orderDateTo}%' `;
     } else if (orderDateStart != '' && orderDateTo != '') {
-      opOrderDate =
-        ' ' +
-        'and od.created_at between' +
-        ' ' +
-        "'" +
-        orderDateStart +
-        "'" +
-        ' ' +
-        'and' +
-        ' ' +
-        "'" +
-        orderDateTo +
-        "'" +
-        ' ';
+      opOrderDate = ` and od.created_at between '${orderDateStart}' and '${orderDateTo}' `;
     }
 
     if (orderSumPriceStart === '' && orderSumPriceTo === '') {
       opOrderSumPrice = ' ';
     } else if (orderSumPriceStart != '' && orderSumPriceTo === '') {
-      opOrderSumPrice =
-        'and od.product_total_price =' + ' ' + orderSumPriceStart;
+      opOrderSumPrice = ` and od.product_total_price = ${orderSumPriceStart} `;
     } else if (orderSumPriceStart === '' && orderSumPriceTo != '') {
-      opOrderSumPrice = 'and od.product_total_price =' + ' ' + orderSumPriceTo;
+      opOrderSumPrice = ` and od.product_total_price =  ${orderSumPriceTo} `;
     } else if (orderSumPriceStart != '' && orderSumPriceTo != '') {
-      opOrderSumPrice =
-        ' ' +
-        'and od.product_total_price between' +
-        ' ' +
-        orderSumPriceStart +
-        ' ' +
-        'and' +
-        ' ' +
-        orderSumPriceTo +
-        ' ';
+      opOrderSumPrice = ` and od.product_total_price between ${orderSumPriceStart} and ${orderSumPriceTo} `;
     }
 
     if (sort === '') {

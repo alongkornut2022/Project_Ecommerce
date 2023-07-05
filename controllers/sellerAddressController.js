@@ -1,5 +1,10 @@
 const { Op } = require('sequelize');
-const { SellerAddress } = require('../models');
+const {
+  SellerAddress,
+  ThaiProvinces,
+  ThaiAmphures,
+  ThaiTambons,
+} = require('../models');
 const createError = require('../utils/createError');
 
 exports.createAddress = async (req, res, next) => {
@@ -14,11 +19,23 @@ exports.createAddress = async (req, res, next) => {
       firstName,
       lastName,
       addressDetail,
+      subDistrict,
       district,
       province,
       postcode,
       phoneNumber,
     } = req.body;
+
+    const nameProvince = await ThaiProvinces.findOne({
+      where: { id: province },
+    });
+    const nameDistrict = await ThaiAmphures.findOne({
+      where: { id: district },
+    });
+
+    const nameSubDistrict = await ThaiTambons.findOne({
+      where: { id: subDistrict },
+    });
 
     const oldAddressDefault = await SellerAddress.findOne({
       where: {
@@ -31,8 +48,9 @@ exports.createAddress = async (req, res, next) => {
         firstName,
         lastName,
         addressDetail,
-        district,
-        province,
+        subDistrict: nameSubDistrict.nameTh,
+        district: nameDistrict.nameTh,
+        province: nameProvince.nameTh,
         postcode,
         phoneNumber,
         sellerId: req.seller.id,
@@ -44,8 +62,9 @@ exports.createAddress = async (req, res, next) => {
         firstName,
         lastName,
         addressDetail,
-        district,
-        province,
+        subDistrict: nameSubDistrict.nameTh,
+        district: nameDistrict.nameTh,
+        province: nameProvince.nameTh,
         postcode,
         phoneNumber,
         sellerId: req.seller.id,
@@ -124,19 +143,38 @@ exports.updateAddress = async (req, res, next) => {
       firstName,
       lastName,
       addressDetail,
+      subDistrict,
       district,
       province,
       postcode,
       phoneNumber,
     } = req.body;
 
+    let nameProvince = await ThaiProvinces.findOne({
+      where: { id: province },
+    });
+
+    let nameDistrict = await ThaiAmphures.findOne({
+      where: { id: district },
+    });
+
+    let nameSubDistrict = await ThaiTambons.findOne({
+      where: { id: subDistrict },
+    });
+
+    nameProvince = nameProvince === null ? province : nameProvince.nameTh;
+    nameDistrict = nameDistrict === null ? district : nameDistrict.nameTh;
+    nameSubDistrict =
+      nameSubDistrict === null ? subDistrict : nameSubDistrict.nameTh;
+
     await SellerAddress.update(
       {
         firstName,
         lastName,
         addressDetail,
-        district,
-        province,
+        subDistrict: nameSubDistrict,
+        district: nameDistrict,
+        province: nameProvince,
         postcode,
         phoneNumber,
       },

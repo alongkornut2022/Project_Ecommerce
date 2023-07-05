@@ -3,6 +3,8 @@ const fs = require('fs');
 const createError = require('../utils/createError');
 const { Customer } = require('../models');
 const cloudinary = require('../utils/cloundinary');
+const { default: isEmail } = require('validator/lib/isEmail');
+const { default: isNumeric } = require('validator/lib/isNumeric');
 const { default: isStrongPassword } = require('validator/lib/isStrongPassword');
 
 exports.getCustomerMe = async (req, res) => {
@@ -16,7 +18,22 @@ exports.updateCustomer = async (req, res, next) => {
     const { username, email, phoneNumber, gender, birthDate } = req.body;
 
     if (req.customer.id != id) {
-      createError('invaild customer', 400);
+      createError('Invaild Customer', 400);
+    }
+
+    const checkFormatUsername = username.search(
+      /^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/
+    );
+    if (checkFormatUsername) {
+      createError('Not Format Username', 400);
+    }
+
+    if (!isEmail(email)) {
+      createError('Not Format Email');
+    }
+
+    if (!isNumeric(phoneNumber) || phoneNumber.length !== 10) {
+      createError('Not Phone Number', 400);
     }
 
     await Customer.update(
@@ -33,11 +50,11 @@ exports.updateCustomerPic = async (req, res, next) => {
   try {
     const { id } = req.params;
     if (req.customer.id != id) {
-      createError('invaild customer', 400);
+      createError('Invaild Customer', 400);
     }
 
     if (!req.files) {
-      createError('customerPicture is required', 400);
+      createError('CustomerPicture is required', 400);
     }
 
     const updateValue = {};
@@ -65,12 +82,11 @@ exports.updateCustomerPic = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { oldPassword, newPassword, confirmNewPassword } = req.body;
 
     if (req.customer.id != id) {
-      createError('invaild customer', 400);
+      createError('Invaild Customer', 400);
     }
-
-    const { oldPassword, newPassword, confirmNewPassword } = req.body;
 
     const customer = await Customer.findOne({
       where: {
@@ -84,19 +100,19 @@ exports.changePassword = async (req, res, next) => {
     );
 
     if (!isCorrectPassword) {
-      createError('invaild password', 400);
+      createError('Invaild Password', 400);
     }
 
     if (newPassword.length < 8) {
-      createError('password must be at least 8 character', 400);
+      createError('Password must be at least 8 character', 400);
     }
 
     if (newPassword !== confirmNewPassword) {
-      createError('passwords do not match', 400);
+      createError('Passwords do not match', 400);
     }
 
     if (!isStrongPassword(newPassword)) {
-      createError('password not strong', 400);
+      createError('Password not strong', 400);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -104,7 +120,7 @@ exports.changePassword = async (req, res, next) => {
       { password: hashedPassword },
       { where: { id: req.customer.id } }
     );
-    res.json({ message: 'change password success' });
+    res.json({ message: 'Change Password success' });
   } catch (err) {
     next(err);
   }
@@ -115,7 +131,7 @@ exports.deleteCustomer = async (req, res, next) => {
     const { id } = req.params;
 
     if (req.customer.id != id) {
-      createError('invaild customer', 400);
+      createError('Invaild Customer', 400);
     }
 
     const result = await Customer.destroy({
@@ -123,7 +139,7 @@ exports.deleteCustomer = async (req, res, next) => {
     });
 
     if (result === 0) {
-      createError('customer with this id not found', 400);
+      createError('Customer with this id not found', 400);
     }
     res.status(204).json();
   } catch (err) {

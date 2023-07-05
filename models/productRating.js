@@ -52,7 +52,7 @@ module.exports = (sequelize, Datatypes) => {
         allowNull: true,
         name: 'postImagesId',
       },
-      onDelete: 'RESTRICT',
+      onDelete: 'SET NULL',
       onUpdate: 'RESTRICT',
     });
 
@@ -61,7 +61,7 @@ module.exports = (sequelize, Datatypes) => {
         allowNull: true,
         name: 'commentId',
       },
-      onDelete: 'RESTRICT',
+      onDelete: 'SET NULL',
       onUpdate: 'RESTRICT',
     });
   };

@@ -16,6 +16,8 @@ const DeliveryRoute = require('./routes/deliveryRoute');
 const PostRoute = require('./routes/postRoute');
 const carouselRoute = require('./routes/carouselRoute');
 const sellerOrderRoute = require('./routes/sellerOrderRoute');
+const commentRoute = require('./routes/commentRoute');
+const thaiAddressRoute = require('./routes/thaiAddressRoute');
 
 const notFoundMiddleware = require('./middlewares/notFound');
 const errormiddleware = require('./middlewares/error');
@@ -38,6 +40,7 @@ app.use('/sellers', sellerAuthRoute);
 app.use('/sellers', sellerAuthenticate, sellerRoute);
 app.use('/sellers/products', sellerAuthenticate, sellerProductRoute);
 app.use('/sellers/order', sellerAuthenticate, sellerOrderRoute);
+app.use('/sellers/comment', sellerAuthenticate, commentRoute);
 
 app.use('/address', addressRoute);
 
@@ -48,6 +51,7 @@ app.use('/cart', customerAuthenticate, cartRoute);
 app.use('/Purchase', customerAuthenticate, PurchaseRoute);
 app.use('/delivery', customerAuthenticate, DeliveryRoute);
 app.use('/postreview', PostRoute);
+app.use('/thaiaddress', thaiAddressRoute);
 
 app.use(notFoundMiddleware);
 app.use(errormiddleware);

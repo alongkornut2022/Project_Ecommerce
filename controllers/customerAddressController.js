@@ -1,6 +1,12 @@
 const { Op } = require('sequelize');
-const { CustomerAddress } = require('../models');
+const {
+  CustomerAddress,
+  ThaiProvinces,
+  ThaiAmphures,
+  ThaiTambons,
+} = require('../models');
 const createError = require('../utils/createError');
+const { getThaiTambons } = require('./ThaiAddressController');
 
 exports.createAddress = async (req, res, next) => {
   try {
@@ -14,11 +20,27 @@ exports.createAddress = async (req, res, next) => {
       firstName,
       lastName,
       addressDetail,
+      subDistrict,
       district,
       province,
       postcode,
       phoneNumber,
     } = req.body;
+
+    const nameProvince = await ThaiProvinces.findOne({
+      where: { id: province },
+    });
+
+    const nameDistrict = await ThaiAmphures.findOne({
+      where: { id: district },
+    });
+
+    const nameSubDistrict = await ThaiTambons.findOne({
+      where: { id: subDistrict },
+    });
+
+    // nameProvince = nameProvince === null ? province : nameProvince.nameTh;
+    // nameDistrict = nameDistrict === null ? district : nameDistrict.nameTh;
 
     const oldAddressDefault = await CustomerAddress.findOne({
       where: {
@@ -31,8 +53,9 @@ exports.createAddress = async (req, res, next) => {
         firstName,
         lastName,
         addressDetail,
-        district,
-        province,
+        subDistrict: nameSubDistrict.nameTh,
+        district: nameDistrict.nameTh,
+        province: nameProvince.nameTh,
         postcode,
         phoneNumber,
         customerId: req.customer.id,
@@ -44,8 +67,9 @@ exports.createAddress = async (req, res, next) => {
         firstName,
         lastName,
         addressDetail,
-        district,
-        province,
+        subDistrict: nameSubDistrict.nameTh,
+        district: nameDistrict.nameTh,
+        province: nameProvince.nameTh,
         postcode,
         phoneNumber,
         customerId: req.customer.id,
@@ -83,13 +107,13 @@ exports.getDefaultAddress = async (req, res, next) => {
       createError('invaild customer', 400);
     }
 
-    const customerAdderssDefault = await CustomerAddress.findOne({
+    const customerAddressDefault = await CustomerAddress.findOne({
       where: {
         [Op.and]: [{ customerId: customerId }, { status: 'default' }],
       },
     });
 
-    res.json({ customerAddressDefault: customerAdderssDefault });
+    res.json({ customerAddressDefault: customerAddressDefault });
   } catch (err) {
     next(err);
   }
@@ -124,19 +148,38 @@ exports.updateAddress = async (req, res, next) => {
       firstName,
       lastName,
       addressDetail,
+      subDistrict,
       district,
       province,
       postcode,
       phoneNumber,
     } = req.body;
 
+    let nameProvince = await ThaiProvinces.findOne({
+      where: { id: province },
+    });
+
+    let nameDistrict = await ThaiAmphures.findOne({
+      where: { id: district },
+    });
+
+    let nameSubDistrict = await ThaiTambons.findOne({
+      where: { id: subDistrict },
+    });
+
+    nameProvince = nameProvince === null ? province : nameProvince.nameTh;
+    nameDistrict = nameDistrict === null ? district : nameDistrict.nameTh;
+    nameSubDistrict =
+      nameSubDistrict === null ? subDistrict : nameSubDistrict.nameTh;
+
     await CustomerAddress.update(
       {
         firstName,
         lastName,
         addressDetail,
-        district,
-        province,
+        subDistrict: nameSubDistrict,
+        district: nameDistrict,
+        province: nameProvince,
         postcode,
         phoneNumber,
       },

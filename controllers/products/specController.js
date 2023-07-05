@@ -105,34 +105,3 @@ exports.updateProductSpec = async (req, res, next) => {
     }
   }
 };
-
-// exports.deletetProductSpec = async (req, res, next) => {
-//   try {
-//     if (!req.seller.id) {
-//       createError('invaild seller', 400);
-//     }
-
-//     const productItem = await ProductItem.findOne({
-//       where: { id: productId },
-//     });
-
-//     if (!productItem) {
-//       createError('invaild product', 400);
-//     }
-
-//     if (productItem.id != productId || req.seller.id != productItem.sellerId) {
-//       createError('seller or product is incorrect', 400);
-//     }
-
-//     const result = await ProductSpec.destroy({
-//       where: { id: productItem.specId },
-//     });
-
-//     if (result === 0) {
-//       createError('seller with this id not found', 400);
-//     }
-//     res.status(204).json();
-//   } catch (err) {
-//     next(err);
-//   }
-// };

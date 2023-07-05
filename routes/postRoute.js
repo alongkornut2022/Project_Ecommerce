@@ -1,22 +1,27 @@
 const express = require('express');
 const PostController = require('../controllers/PostController');
-const uploadImageReview = require('../middlewares/uploadImageReview');
+const postImagesRoute = require('../routes/postImagesRoute');
+
 const customerAuthenticate = require('../middlewares/customerAuthenticate');
 
 const router = express.Router();
 
 router.post(
   '/:orderDetailId/:productId/:customerId',
-  uploadImageReview.array('imageReview', { maxCount: 4 }),
   customerAuthenticate,
   PostController.createPost
 );
 
 router.patch(
-  '/:orderDetailId/:productId/:customerId',
-  uploadImageReview.array('imageReview', { maxCount: 4 }),
+  '/:customerId/:productRatingId',
   customerAuthenticate,
   PostController.updatePost
+);
+
+router.get(
+  '/order/:customerId/:orderDetailId',
+  customerAuthenticate,
+  PostController.getRatingByOrder
 );
 
 router.get(
@@ -34,10 +39,11 @@ router.get(
 );
 
 router.delete(
-  '/:orderDetailId/:productId/:customerId',
-
+  '/:customerId/:productRatingId',
   customerAuthenticate,
   PostController.deletePost
 );
+
+router.use('/images', customerAuthenticate, postImagesRoute);
 
 module.exports = router;

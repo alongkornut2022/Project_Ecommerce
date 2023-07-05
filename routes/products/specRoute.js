@@ -15,6 +15,5 @@ router.patch(
   uploadText.single('productSpec'),
   specController.updateProductSpec
 );
-// router.delete('/:productId', specController.deletetProductSpec);
 
 module.exports = router;

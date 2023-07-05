@@ -1,69 +1,128 @@
+const fs = require('fs');
 const { QueryTypes, Op } = require('sequelize');
-const { ProductItem, ProductStock, sequelize } = require('../models');
+const {
+  ProductItem,
+  ProductStock,
+  ProductCategory,
+  ProductSpec,
+  sequelize,
+} = require('../models');
 const createError = require('../utils/createError');
 
 exports.createProduct = async (req, res, next) => {
-  // const t = await sequelize.transaction();
   try {
+    const { sellerId } = req.params;
+
     const {
+      selectCategory,
       productName,
-      productUnitprice,
-      categoryId,
-      stockId,
-      imagesId,
-      specId,
-      stockStart,
-      alreadysold,
-      inventory,
-      productWeightPiece,
+      productUnitPrice,
+      productWeight,
+      productSpec,
+      productStock,
+      productImagesId,
+      productStatus,
     } = req.body;
 
-    if (!req.seller.id) {
+    if (!req.seller.id === sellerId) {
       createError('invaild seller', 400);
     }
 
-    const productitems = await ProductItem.create(
-      {
-        productName,
-        productUnitprice,
-        categoryId,
-        stockId,
-        imagesId,
-        specId,
-        productWeightPiece,
-        sellerId: req.seller.id,
-      }
-      // { transaction: t }
-    );
-    // res.status(201).json({ productitems: productitems });
-
-    const productstocks = await ProductStock.create(
-      {
-        stockStart,
-        alreadysold,
-        inventory,
-      }
-      // { transaction: t }
-    );
-
-    await ProductItem.update(
-      { stockId: productstocks.id },
-      { where: { id: productitems.id } }
-      // { transaction: t }
-    );
-
-    const products = await ProductItem.findOne({
-      where: { id: productitems.id },
+    const category = await ProductCategory.findOne({
+      where: { categoryName: selectCategory },
     });
 
-    // await t.commit();
+    const stock = await ProductStock.create({
+      stockStart: productStock,
+      alreadysold: 0,
+      inventory: productStock,
+    });
 
-    res.status(201).json({ products: products });
+    const spec = await ProductSpec.create({ productSpec: productSpec });
+
+    const productItem = await ProductItem.create({
+      productName: productName,
+      productUnitprice: productUnitPrice,
+      productWeightPiece: productWeight,
+      productStatus: productStatus,
+      sellerId: sellerId,
+      categoryId: category.dataValues.id,
+      stockId: stock.dataValues.id,
+      imagesId: productImagesId,
+      specId: spec.dataValues.id,
+    });
+    res.json({ productItem });
   } catch (err) {
-    // await t.rollback();
     next(err);
   }
 };
+
+// exports.createProduct = async (req, res, next) => {
+//   // const t = await sequelize.transaction();
+//   try {
+//     const { sellerId } = req.params;
+//     const {
+//       productName,
+//       productUnitprice,
+//       categoryId,
+//       stockId,
+//       imagesId,
+//       specId,
+//       stockStart,
+//       alreadysold,
+//       inventory,
+//       productWeightPiece,
+//     } = req.body;
+
+//     if (!req.seller) {
+//       createError('is not seller', 400);
+//     }
+//     if (req.seller.id === sellerId) {
+//       createError('invaild seller', 400);
+//     }
+
+//     const productitems = await ProductItem.create(
+//       {
+//         productName,
+//         productUnitprice,
+//         categoryId,
+//         stockId,
+//         imagesId,
+//         specId,
+//         productWeightPiece,
+//         sellerId: req.seller.id,
+//       }
+//       // { transaction: t }
+//     );
+//     // res.status(201).json({ productitems: productitems });
+
+//     const productstocks = await ProductStock.create(
+//       {
+//         stockStart,
+//         alreadysold,
+//         inventory,
+//       }
+//       // { transaction: t }
+//     );
+
+//     await ProductItem.update(
+//       { stockId: productstocks.id },
+//       { where: { id: productitems.id } }
+//       // { transaction: t }
+//     );
+
+//     const products = await ProductItem.findOne({
+//       where: { id: productitems.id },
+//     });
+
+//     // await t.commit();
+
+//     res.status(201).json({ products: products });
+//   } catch (err) {
+//     // await t.rollback();
+//     next(err);
+//   }
+// };
 
 exports.getAllProductBySeller = async (req, res, next) => {
   try {
@@ -80,7 +139,7 @@ exports.getAllProductBySeller = async (req, res, next) => {
 
     if (status === 'ทั้งหมด') {
       const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} order by p.updated_at desc  ;`,
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} order by p.updated_at desc  ;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -88,7 +147,7 @@ exports.getAllProductBySeller = async (req, res, next) => {
       res.json({ productSeller: productSeller });
     } else {
       const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.product_status = '${status}' order by p.updated_at desc  ;`,
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} and p.product_status = '${status}' order by p.updated_at desc  ;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -99,43 +158,43 @@ exports.getAllProductBySeller = async (req, res, next) => {
     next(err);
   }
 };
+
+// exports.getSearchProductBySeller = async (req, res, next) => {
+//   try {
+//     const { sellerId } = req.params;
+//     const { keyword, navBar } = req.query;
+
+//     if (!req.seller) {
+//       createError('is not seller', 400);
+//     }
+
+//     if (!req.seller.id === sellerId) {
+//       createError('invaild seller', 400);
+//     }
+
+//     if (navBar === 'ทั้งหมด') {
+//       const productSeller = await sequelize.query(
+//         `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts  from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id) left join discounts dis on p.discounts_id = dis.id = ${req.seller.id} and p.product_name like '%${keyword}%' order by p.updated_at desc  ;`,
+//         {
+//           type: QueryTypes.SELECT,
+//         }
+//       );
+//       res.json({ productSeller: productSeller });
+//     } else {
+//       const productSeller = await sequelize.query(
+//         `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts  from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} and p.product_name like '%${keyword}%' and p.product_status = '${navBar}' order by p.updated_at desc  ;`,
+//         {
+//           type: QueryTypes.SELECT,
+//         }
+//       );
+//       res.json({ productSeller: productSeller });
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 
 exports.getSearchProductBySeller = async (req, res, next) => {
-  try {
-    const { sellerId } = req.params;
-    const { keyword, navBar } = req.query;
-
-    if (!req.seller) {
-      createError('is not seller', 400);
-    }
-
-    if (!req.seller.id === sellerId) {
-      createError('invaild seller', 400);
-    }
-
-    if (navBar === 'ทั้งหมด') {
-      const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.product_name like '%${keyword}%' order by p.updated_at desc  ;`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      res.json({ productSeller: productSeller });
-    } else {
-      const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.product_name like '%${keyword}%' and p.product_status = '${navBar}' order by p.updated_at desc  ;`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      res.json({ productSeller: productSeller });
-    }
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.getSearchMultiChoiceProductBySeller = async (req, res, next) => {
   try {
     const { sellerId } = req.params;
     const {
@@ -266,7 +325,7 @@ exports.getSearchMultiChoiceProductBySeller = async (req, res, next) => {
 
     if (navBar === 'ทั้งหมด') {
       const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold}  order by p.updated_at desc  ;`,
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts  from (((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold}  order by p.updated_at desc  ;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -274,7 +333,7 @@ exports.getSearchMultiChoiceProductBySeller = async (req, res, next) => {
       res.json({ productSeller: productSeller });
     } else {
       const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} and p.product_status = '${navBar}'  ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold} order by p.updated_at desc  ;`,
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts  from (((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} and p.product_status = '${navBar}'  ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold} order by p.updated_at desc  ;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -418,7 +477,7 @@ exports.getSortProductBySeller = async (req, res, next) => {
 
     if (navBar === 'ทั้งหมด') {
       const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold}  order by ${sort}  ;`,
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts, p.product_status productStatus  from (((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold}  order by ${sort}  ;`,
 
         {
           type: QueryTypes.SELECT,
@@ -427,7 +486,7 @@ exports.getSortProductBySeller = async (req, res, next) => {
       res.json({ productSeller: productSeller });
     } else {
       const productSeller = await sequelize.query(
-        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id where sl.id = ${req.seller.id} and p.product_status = '${navBar}'  ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold} order by ${sort}  ;`,
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts, p.product_status productStatus   from (((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join product_category cat on p.category_id = cat.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} and p.product_status = '${navBar}'  ${opProductName}  ${opCategory}  ${opPrice}  ${opStockstart}  ${opInventory}  ${opAlreadysold} order by ${sort}  ;`,
 
         {
           type: QueryTypes.SELECT,
@@ -459,7 +518,7 @@ exports.getProductById = async (req, res, next) => {
     }
 
     const productSeller = await sequelize.query(
-      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId, p.product_weight_piece productWeightPiece,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, sl.shop_picture shopPicture, p.images_id imagesId, pi.image1, pi.image2, pi.image3, pi.image4, pi.image5, pi.image6, pi.image7, pi.image8, pi.image9 from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where p.id = ${productId}`,
+      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId, p.product_weight_piece productWeightPiece,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, sl.shop_picture shopPicture, p.images_id imagesId, pi.image1, pi.image2, pi.image3, pi.image4, pi.image5, pi.image6, pi.image7, pi.image8, pi.image9, dis.id discountsId, dis.discounts discounts, p.product_status productStatus  from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join discounts dis on p.discounts_id = dis.id where p.id = ${productId}`,
       {
         type: QueryTypes.SELECT,
       }
@@ -489,7 +548,7 @@ exports.getProductByCategoryId = async (req, res, next) => {
     }
 
     const productByCategory = await sequelize.query(
-      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId, p.product_weight_piece productWeightPiece, ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, pi.image2, pi.image3, pi.image4, pi.image5, pi.image6, pi.image7, pi.image8, pi.image9 from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.category_id = ${categoryId}`,
+      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId, p.product_weight_piece productWeightPiece, ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, pi.image2, pi.image3, pi.image4, pi.image5, pi.image6, pi.image7, pi.image8, pi.image9, p.product_status productStatus from (((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id = ${req.seller.id} and p.category_id = ${categoryId}`,
       {
         type: QueryTypes.SELECT,
       }
@@ -503,28 +562,67 @@ exports.getProductByCategoryId = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const { productName, productUnitprice, productWeightPiece } = req.body;
+    const { sellerId, productId } = req.params;
 
-    if (!req.seller.id) {
+    const {
+      selectCategory,
+      productName,
+      productUnitPrice,
+      productWeight,
+      productSpec,
+      productStock,
+      productStatus,
+    } = req.body;
+
+    if (!req.seller.id === sellerId) {
       createError('invaild seller', 400);
     }
 
-    const checkProductId = await ProductItem.findOne({
+    const productItem = await ProductItem.findOne({
       where: {
         [Op.and]: [{ id: productId }, { sellerId: req.seller.id }],
       },
     });
 
-    if (!checkProductId) {
+    if (!productItem) {
       createError('invaild product', 400);
     }
 
-    await ProductItem.update(
-      { productName, productUnitprice, productWeightPiece },
-      { where: { id: productId } }
+    const category = await ProductCategory.findOne({
+      where: { categoryName: selectCategory },
+    });
+
+    const productStockOld = await ProductStock.findOne({
+      where: { id: productItem.dataValues.stockId },
+    });
+
+    const newInventory = productStock - productStockOld.dataValues.alreadysold;
+
+    await ProductStock.update(
+      {
+        stockStart: productStock,
+        inventory: newInventory,
+      },
+      { where: { id: productItem.dataValues.stockId } }
     );
-    res.json({ message: 'update success' });
+
+    await ProductSpec.update(
+      { productSpec: productSpec },
+      { where: { id: productItem.dataValues.specId } }
+    );
+
+    await ProductItem.update(
+      {
+        productName: productName,
+        productUnitprice: productUnitPrice,
+        productWeightPiece: productWeight,
+        productStatus: productStatus,
+        categoryId: category.dataValues.id,
+      },
+      { where: { id: productItem.dataValues.id } }
+    );
+
+    res.json({ message: 'update product success' });
   } catch (err) {
     next(err);
   }

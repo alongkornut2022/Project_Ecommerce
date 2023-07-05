@@ -3,6 +3,8 @@ const fs = require('fs');
 const createError = require('../utils/createError');
 const { Seller } = require('../models');
 const cloudinary = require('../utils/cloundinary');
+const { default: isEmail } = require('validator/lib/isEmail');
+const { default: isNumeric } = require('validator/lib/isNumeric');
 const { default: isStrongPassword } = require('validator/lib/isStrongPassword');
 
 exports.getSellerMe = async (req, res) => {
@@ -17,6 +19,19 @@ exports.updateSeller = async (req, res, next) => {
 
     if (req.seller.id != id) {
       createError('invaild seller', 400);
+    }
+
+    // const checkFormatShopName = shopName.search(/^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/);
+    // if (checkFormatShopName) {
+    //   createError('Not Format Shopname', 400);
+    // }
+
+    if (!isEmail(email)) {
+      createError('Not Format Email');
+    }
+
+    if (!isNumeric(phoneNumber) || phoneNumber.length !== 10) {
+      createError('Not Phone Number', 400);
     }
 
     await Seller.update(
@@ -63,14 +78,13 @@ exports.updateSellerPic = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { oldPassword, newPassword, confirmNewPassword } = req.body;
 
     if (req.seller.id != id) {
       createError('invaild customer', 400);
     }
 
-    const { oldPassword, newPassword, confirmNewPassword } = req.body;
-
-    const seller = await seller.findOne({
+    const seller = await Seller.findOne({
       where: {
         id: req.seller.id,
       },
@@ -78,7 +92,7 @@ exports.changePassword = async (req, res, next) => {
 
     const isCorrectPassword = await bcrypt.compare(
       oldPassword,
-      customer.password
+      seller.password
     );
 
     if (!isCorrectPassword) {

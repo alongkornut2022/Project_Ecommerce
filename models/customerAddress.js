@@ -23,6 +23,13 @@ module.exports = (sequelize, DataTypes) => {
           notEmpty: true,
         },
       },
+      subDistrict: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          notEmpty: true,
+        },
+      },
       district: {
         type: DataTypes.STRING,
         allowNull: false,

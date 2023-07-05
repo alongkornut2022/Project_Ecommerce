@@ -18,7 +18,6 @@ router.patch(
   '/status/:sellerAddressId/:sellerId',
   sellerAddressController.updateStatus
 );
-
 router.delete(
   '/:sellerAddressId/:sellerId',
   sellerAddressController.deleteAddress

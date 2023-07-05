@@ -1,99 +1,42 @@
 const { ProductItem, ProductStock } = require('../../models');
 const createError = require('../../utils/createError');
 
-exports.createProductStock = async (req, res, next) => {
+exports.updateAlreadysold = async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const { stockStart, alreadysold, inventory } = req.body;
+    const { sellerId, productId } = req.params;
+    const { sales } = req.body;
 
     if (!req.seller.id) {
       createError('invaild seller', 400);
     }
 
+    if (req.seller.id === sellerId) {
+      createError('invaild seller', 400);
+    }
+
     const productItem = await ProductItem.findOne({
-      where: { id: productId },
+      where: {
+        [Op.and]: [{ id: productId }, { sellerId: req.seller.id }],
+      },
     });
 
     if (!productItem) {
       createError('invaild product', 400);
     }
 
-    if (productItem.id != productId || req.seller.id != productItem.sellerId) {
-      createError('invaild seller or product', 400);
-    }
-
-    const productstocks = await ProductStock.create({
-      stockStart,
-      alreadysold,
-      inventory,
+    const productStockOld = await ProductStock.findOne({
+      where: { id: productItem.dataValues.stockId },
     });
 
-    res.status(201).json({ productstocks: productstocks });
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.updateProductStock = async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const { stockStart, alreadysold, inventory } = req.body;
-
-    if (!req.seller.id) {
-      createError('invaild seller', 400);
-    }
-
-    const productItem = await ProductItem.findOne({
-      where: { id: productId },
-    });
-
-    if (!productItem) {
-      createError('invaild product', 400);
-    }
-
-    if (productItem.id != productId || req.seller.id != productItem.sellerId) {
-      createError('seller or product is incorrect', 400);
-    }
+    const newInventory = productStockOld.dataValues.inventory - sales;
+    const newAlreadysold = productStockOld.dataValues.alreadysold + sales;
 
     await ProductStock.update(
-      { stockStart, alreadysold, inventory },
-      { where: { id: productItem.stockId } }
+      { alreadysold: newAlreadysold, inventory: newInventory },
+      { where: { id: productItem.dataValues.stockId } }
     );
     res.json({ message: 'update success' });
   } catch (err) {
     next(err);
   }
 };
-
-// exports.deleteProductStock = async (req, res, next) => {
-//   try {
-//     const { productId } = req.params;
-
-//     if (!req.seller.id) {
-//       createError('invaild seller', 400);
-//     }
-
-//     const productItem = await ProductItem.findOne({
-//       where: { id: productId },
-//     });
-
-//     if (!productItem) {
-//       createError('invaild product', 400);
-//     }
-
-//     if (productItem.id != productId || req.seller.id != productItem.sellerId) {
-//       createError('seller or product is incorrect', 400);
-//     }
-
-//     const result = await ProductStock.destroy({
-//       where: { id: productItem.stockId },
-//     });
-
-//     if (result === 0) {
-//       createError('seller with this id not found', 400);
-//     }
-//     res.status(204).json();
-//   } catch (err) {
-//     next(err);
-//   }
-// };

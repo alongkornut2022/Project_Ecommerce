@@ -11,17 +11,44 @@ exports.register = async (req, res, next) => {
     const { shopName, email, phoneNumber, password, confirmPassword } =
       req.body;
 
-    const checkShopnames = shopName.search(/^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/);
-    if (checkShopnames) {
-      createError('not format shopname', 400);
-    }
+    // const checkFormatShopName = shopName.search(
+    //   /^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/
+    // );
+
+    // if (checkFormatShopName) {
+    //   createError('not format shopname', 400);
+    // }
+
+    // const checkShopName = await Customer.findOne({
+    //   where: { shopName },
+    // });
+
+    // if (checkShopName != null) {
+    //   createError('This Shop Name already exists', 400);
+    // }
 
     if (!isEmail(email)) {
       createError('not email');
     }
 
+    const checkEmail = await Customer.findOne({
+      where: { email },
+    });
+
+    if (checkEmail != null) {
+      createError('This Email already exists', 400);
+    }
+
     if (!isNumeric(phoneNumber) || phoneNumber.length !== 10) {
       createError('not Phone Number', 400);
+    }
+
+    const checkPhoneNumber = await Customer.findOne({
+      where: { phoneNumber },
+    });
+
+    if (checkPhoneNumber != null) {
+      createError('This Phone Number already exists', 400);
     }
 
     if (!password) {
@@ -50,8 +77,6 @@ exports.register = async (req, res, next) => {
 
     const payload = {
       id: seller.id,
-      // email: seller.email,
-      // shopname: seller.shopName,
     };
 
     const secretKey = process.env.JWT_SECRET_KEY;
@@ -67,6 +92,7 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { emailOrPhoneNumber, password } = req.body;
+
     if (!emailOrPhoneNumber) {
       createError('email or phone Number is require', 400);
     }
@@ -81,17 +107,15 @@ exports.login = async (req, res, next) => {
       });
 
       if (!seller) {
-        createError('invaild email or phone Number or password', 400);
+        createError('iInvaild Email or Phone Number or Password', 400);
       }
       const isCorrectPassword = await bcrypt.compare(password, seller.password);
       if (!isCorrectPassword) {
-        createError('invaild email or phone Number or password', 400);
+        createError('Invaild Email or Phone Number or Password', 400);
       }
 
       const payload = {
         id: seller.id,
-        // email: seller.email,
-        // shopName: seller.shopName,
       };
 
       const secretKey = process.env.JWT_SECRET_KEY;
@@ -106,23 +130,23 @@ exports.login = async (req, res, next) => {
         where: { phoneNumber: emailOrPhoneNumber },
       });
       if (!seller) {
-        createError('invaild email or phone Number or password', 400);
+        createError('Invaild Email or Phone Number or Password', 400);
       }
       const isCorrectPassword = await bcrypt.compare(password, seller.password);
       if (!isCorrectPassword) {
-        createError('invaild username or password', 400);
+        createError('Invaild Email or Phone Number or Password', 400);
       }
 
       const payload = {
         id: seller.id,
-        // email: seller.email,
-        // shopName: seller.shopName,
       };
 
       const secretKey = process.env.JWT_SECRET_KEY;
 
       const tokenSeller = jwt.sign(payload, secretKey, { expiresIn: '30d' });
       res.json({ message: 'login success', tokenSeller });
+    } else {
+      createError('Invaild Email or Phone Number or Password', 400);
     }
   } catch (err) {
     next(err);
