@@ -2,12 +2,14 @@ const fs = require('fs');
 const { QueryTypes, Op } = require('sequelize');
 const {
   ProductItem,
-  ProductStock,
   ProductCategory,
+  ProductStock,
   ProductSpec,
+  ProductImages,
   sequelize,
 } = require('../models');
 const createError = require('../utils/createError');
+const cloudinary = require('../utils/cloundinary');
 
 exports.createProduct = async (req, res, next) => {
   try {
@@ -18,7 +20,7 @@ exports.createProduct = async (req, res, next) => {
       productName,
       productUnitPrice,
       productWeight,
-      productSpec,
+      productSpecId,
       productStock,
       productImagesId,
       productStatus,
@@ -38,8 +40,6 @@ exports.createProduct = async (req, res, next) => {
       inventory: productStock,
     });
 
-    const spec = await ProductSpec.create({ productSpec: productSpec });
-
     const productItem = await ProductItem.create({
       productName: productName,
       productUnitprice: productUnitPrice,
@@ -49,7 +49,7 @@ exports.createProduct = async (req, res, next) => {
       categoryId: category.dataValues.id,
       stockId: stock.dataValues.id,
       imagesId: productImagesId,
-      specId: spec.dataValues.id,
+      specId: productSpecId,
     });
     res.json({ productItem });
   } catch (err) {
@@ -569,7 +569,6 @@ exports.updateProduct = async (req, res, next) => {
       productName,
       productUnitPrice,
       productWeight,
-      productSpec,
       productStock,
       productStatus,
     } = req.body;
@@ -606,11 +605,6 @@ exports.updateProduct = async (req, res, next) => {
       { where: { id: productItem.dataValues.stockId } }
     );
 
-    await ProductSpec.update(
-      { productSpec: productSpec },
-      { where: { id: productItem.dataValues.specId } }
-    );
-
     await ProductItem.update(
       {
         productName: productName,
@@ -628,33 +622,94 @@ exports.updateProduct = async (req, res, next) => {
   }
 };
 
-// exports.deleteProduct = async (req, res, next) => {
-//   try {
-//     const { productId } = req.params;
+exports.deleteProduct = async (req, res, next) => {
+  try {
+    const { sellerId, productId } = req.params;
 
-//     if (req.seller.id != sellerId) {
-//       createError('invaild seller', 400);
-//     }
+    if (req.seller.id != sellerId) {
+      createError('invaild seller', 400);
+    }
 
-//     const checkProductId = await ProductItem.findOne({
-//       where: {
-//         [Op.and]: [{ id: productId }, { sellerId: req.seller.id }],
-//       },
-//     });
+    const productItem = await ProductItem.findOne({
+      where: {
+        [Op.and]: [{ id: productId }, { sellerId: req.seller.id }],
+      },
+    });
 
-//     if (!checkProductId) {
-//       createError('invaild product', 400);
-//     }
+    console.log(productItem);
 
-//     const result = await ProductItem.destroy({
-//       where: { id: productId, sellerId: req.seller.id },
-//     });
+    if (!productItem) {
+      createError('invaild product', 400);
+    }
 
-//     if (result === 0) {
-//       createError('seller with this id not found', 400);
-//     }
-//     res.status(204).json();
-//   } catch (err) {
-//     next(err);
-//   }
-// };
+    await ProductItem.destroy({
+      where: { id: productId, sellerId: req.seller.id },
+    });
+
+    await ProductStock.destroy({
+      where: { id: productItem.dataValues.stockId },
+    });
+
+    const productSpec = await ProductSpec.findOne({
+      where: { id: productItem.dataValues.specId },
+    });
+
+    const delProductSpec = await ProductSpec.destroy({
+      where: { id: productItem.dataValues.specId },
+    });
+
+    // if (delProductSpec === 1) {
+    //   fs.unlinkSync(productSpec.productSpec);
+    // }
+
+    const productImages = await ProductImages.findOne({
+      where: {
+        id: productItem.dataValues.imagesId,
+      },
+      attributes: {
+        exclude: ['id'],
+      },
+    });
+
+    const arrProductImages = [];
+    if (productImages) {
+      const {
+        image1,
+        image2,
+        image3,
+        image4,
+        image5,
+        image6,
+        image7,
+        image8,
+        image9,
+      } = productImages;
+      arrProductImages.push(image1);
+      arrProductImages.push(image2);
+      arrProductImages.push(image3);
+      arrProductImages.push(image4);
+      arrProductImages.push(image5);
+      arrProductImages.push(image6);
+      arrProductImages.push(image7);
+      arrProductImages.push(image8);
+      arrProductImages.push(image9);
+
+      for (let item of arrProductImages) {
+        if (item === null) {
+        } else {
+          const splited = item.split('/');
+          const publicId = splited[splited.length - 1].split('.')[0];
+          await cloudinary.destroy(publicId);
+        }
+      }
+    }
+
+    await ProductImages.destroy({
+      where: { id: productItem.dataValues.imagesId },
+    });
+
+    res.status(204).json();
+  } catch (err) {
+    next(err);
+  }
+};

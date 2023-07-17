@@ -5,13 +5,13 @@ const uploadText = require('../../middlewares/uploadText');
 const router = express.Router();
 
 router.post(
-  '/:productId',
+  '/:sellerId',
   uploadText.single('productSpec'),
   specController.createProductSpec
 );
 
 router.patch(
-  '/:productId',
+  '/:sellerId/:productId',
   uploadText.single('productSpec'),
   specController.updateProductSpec
 );

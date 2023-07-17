@@ -8,13 +8,18 @@ exports.getProductSearch = async (req, res, next) => {
     let resultCategoryName =
       'pc.category_name = ' + "'" + categorySearch + "'" + ' ';
 
-    let newKeyword = keySearch.split(' ');
-    let filterKeyword = newKeyword.filter((item) => item !== '');
-    let mapKeyword = filterKeyword.map(
-      (item) => 'p.product_name like ' + "'" + '%' + item + '%' + "'" + ' or '
-    );
-    let stringKeyword = mapKeyword.join('');
-    let resultKeyword = stringKeyword.slice(0, stringKeyword.length - 3);
+    let resultKeyword;
+    if (!keySearch) {
+      resultKeyword = 'p.product_name like ' + "'" + '%' + '' + '%' + "'";
+    } else {
+      let newKeyword = keySearch.split(' ');
+      let filterKeyword = newKeyword.filter((item) => item !== '');
+      let mapKeyword = filterKeyword.map(
+        (item) => 'p.product_name like ' + "'" + '%' + item + '%' + "'" + ' or '
+      );
+      let stringKeyword = mapKeyword.join('');
+      resultKeyword = stringKeyword.slice(0, stringKeyword.length - 3);
+    }
 
     let resultSearch = [];
 
@@ -40,37 +45,6 @@ exports.getProductSearch = async (req, res, next) => {
         );
       }
 
-      // let changeToString = filterKeyword.join(' ');
-      // let newResultSearch = [];
-      // let sortResultSearch = [];
-      // resultSearch.forEach((item, index) => {
-      //   if (
-      //     item.productName
-      //       .toLowerCase()
-      //       .includes(changeToString.toLowerCase(), 0)
-      //   ) {
-      //     newResultSearch.push(item);
-      //     resultSearch.splice(index, 1);
-      //   }
-      // });
-
-      // for (let i = 0; (i = filterKeyword.length); i++) {
-      //   filterKeyword.pop();
-      //   changeToString = filterKeyword.join(' ');
-      //   resultSearch.forEach((item, index) => {
-      //     if (
-      //       item.productName
-      //         .toLowerCase()
-      //         .includes(changeToString.toLowerCase(), 0)
-      //     ) {
-      //       newResultSearch.push(item);
-      //       resultSearch.splice(index, 1);
-      //     }
-      //   });
-      // }
-
-      // sortResultSearch = sortResultSearch.concat(newResultSearch, resultSearch);
-
       const sortResultSearch = resultSearch;
 
       res.json({ sortResultSearch });
@@ -93,38 +67,6 @@ exports.getProductSearch = async (req, res, next) => {
           }
         );
       }
-
-      // let changeToString = filterKeyword.join(' ');
-      // console.log('changeToString', changeToString);
-      // let newResultSearch = [];
-      // let sortResultSearch = [];
-      // resultSearch.forEach((item, index) => {
-      //   if (
-      //     item.productName.toLowerCase().includes(changeToString.toLowerCase())
-      //   ) {
-      //     newResultSearch.push(item);
-      //     resultSearch.splice(index, 1);
-      //   } else {
-      //   }
-      // });
-
-      // for (let i = 1; (i = filterKeyword.length); i++) {
-      //   filterKeyword.pop();
-      //   changeToString = filterKeyword.join(' ');
-      //   resultSearch.forEach((item, index) => {
-      //     if (
-      //       item.productName
-      //         .toLowerCase()
-      //         .includes(changeToString.toLowerCase(), 0)
-      //     ) {
-      //       newResultSearch.push(item);
-      //       resultSearch.splice(index, 1);
-      //     } else {
-      //     }
-      //   });
-      // }
-
-      // sortResultSearch = sortResultSearch.concat(newResultSearch, resultSearch);
 
       const sortResultSearch = resultSearch;
 

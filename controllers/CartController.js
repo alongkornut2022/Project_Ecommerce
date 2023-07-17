@@ -1,8 +1,8 @@
 const { QueryTypes, Op } = require('sequelize');
 const {
   ProductItem,
+  ProductStock,
   Cart,
-  Seller,
   Discounts,
   sequelize,
 } = require('../models');
@@ -11,13 +11,7 @@ const createError = require('../utils/createError');
 exports.createCart = async (req, res, next) => {
   try {
     const { productId, customerId } = req.params;
-    const {
-      amount,
-      // productTotalPrice,
-      // productUnitprice,
-      productWeightTotal,
-      sellerId,
-    } = req.body;
+    const { amount, productWeightTotal, sellerId } = req.body;
 
     if (req.customer.id != customerId) {
       createError('invaild customer', 400);
@@ -27,6 +21,10 @@ exports.createCart = async (req, res, next) => {
     if (!products) {
       createError('invaild product', 400);
     }
+
+    const productStock = await ProductStock.findOne({
+      where: { id: products.dataValues.stockId },
+    });
 
     let newProductUnitprice;
     let discounts;
@@ -45,8 +43,6 @@ exports.createCart = async (req, res, next) => {
         );
     }
 
-    const productTotalPrice = newProductUnitprice * amount;
-
     const checkCart = await Cart.findOne({
       where: {
         [Op.and]: [{ customerId: customerId }, { productId: productId }],
@@ -58,6 +54,11 @@ exports.createCart = async (req, res, next) => {
     let addProductWeightTotal = 0;
     if (checkCart) {
       addAmount = +checkCart.amount + amount;
+
+      if (productStock.dataValues.inventory - addAmount < 0) {
+        createError('product is out of stock', 400);
+      }
+
       addProductTotalPrice = newProductUnitprice * addAmount;
       addProductWeightTotal = productWeightTotal * addAmount;
       await Cart.update(
@@ -70,6 +71,7 @@ exports.createCart = async (req, res, next) => {
       );
       res.json({ message: 'เพิ่มไปยังรถเข็นเรียบร้อยแล้ว' });
     } else {
+      const productTotalPrice = newProductUnitprice * amount;
       await Cart.create({
         customerId,
         productId,
@@ -85,7 +87,7 @@ exports.createCart = async (req, res, next) => {
   }
 };
 
-exports.getAllCart = async (req, res, next) => {
+exports.getCartByCustomer = async (req, res, next) => {
   try {
     const { customerId } = req.params;
 
@@ -94,7 +96,7 @@ exports.getAllCart = async (req, res, next) => {
     }
 
     const carts = await sequelize.query(
-      `select c.id cartId, c.customer_id customerId, c.product_id productId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, p.seller_id sellerId, s.shop_name shopName, ps.id stockId, ps.inventory inventory, c.created_at createdAt, dis.id discountsId, dis.discounts discounts from ((((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id )left join seller s on p.seller_id = s.id) left join discounts dis on p.discounts_id = dis.id  where c.customer_id = ${customerId} `,
+      `select c.id cartId, c.customer_id customerId, c.product_id productId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, p.seller_id sellerId, s.shop_name shopName, ps.id stockId, ps.inventory inventory, c.created_at createdAt, dis.id discountsId, dis.discounts discounts from ((((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id) left join seller s on p.seller_id = s.id) left join discounts dis on p.discounts_id = dis.id  where c.customer_id = ${customerId} `,
       {
         type: QueryTypes.SELECT,
       }
@@ -110,13 +112,13 @@ exports.getCartBySeller = async (req, res, next) => {
   try {
     const { cartIds, customerId } = req.params;
 
-    const newCartIds = cartIds.split(',');
-
     if (req.customer.id != customerId) {
       createError('invaild customer', 400);
     }
 
-    const cartBySeller = [];
+    const newCartIds = cartIds.split(',');
+
+    const cartSelect = [];
 
     for (let item of newCartIds) {
       const cart = await sequelize.query(
@@ -125,43 +127,32 @@ exports.getCartBySeller = async (req, res, next) => {
           type: QueryTypes.SELECT,
         }
       );
-      cartBySeller.push(cart[0]);
+      cartSelect.push(cart[0]);
     }
 
-    const productTotalPrice = cartBySeller.map(
-      (item) => item.productTotalPrice
-    );
+    const productTotalPrice = cartSelect.map((item) => item.productTotalPrice);
 
-    const newCartSeller = cartBySeller.map((item) => item.sellerId);
+    const cartSellerId = cartSelect.map((item) => item.sellerId);
+    const resultCartSellerId = [...new Set(cartSellerId)];
 
-    const cartSellerIds = [...new Set(newCartSeller)];
-
-    // const cartSellerIds = [];
-    // cartSellerIds.push(newCartSeller[0]);
-    // const compareNum = (a, b) => {
-    //   if (a !== b) cartSellerIds.push(newCartSeller[b]);
-    //   if (a === b) newCartSeller.splice(newCartSeller[b], 1);
-    // };
-    // newCartSeller.sort(compareNum);
-
-    const sellers = [];
-    for (let item of cartSellerIds) {
+    const cartBySeller = [];
+    for (let item of resultCartSellerId) {
       const seller = await sequelize.query(
         `select s.id sellerId, s.shop_name shopName, s.phone_number phoneNumber, s.shop_picture shopPicture, sa.id sellerAddressId, sa.district sellerDistrict, sa.province sellerProvince, sa.postcode sellerPostcode  from seller s left join seller_address sa on s.id = sa.seller_id where s.id = ${item}`,
         {
           type: QueryTypes.SELECT,
         }
       );
-      sellers.push(seller[0]);
+      cartBySeller.push(seller[0]);
     }
 
-    res.json({ sellers, productTotalPrice });
+    res.json({ cartBySeller, productTotalPrice });
   } catch (err) {
     next(err);
   }
 };
 
-exports.getCartCheckout = async (req, res, next) => {
+exports.getCartProduct = async (req, res, next) => {
   try {
     const { sellerId, cartIds, customerId } = req.params;
 
@@ -170,7 +161,7 @@ exports.getCartCheckout = async (req, res, next) => {
     }
 
     const newCartIds = cartIds.split(',');
-    const cartCheckout = [];
+    const cartProduct = [];
     for (let item of newCartIds) {
       const cart = await sequelize.query(
         `select c.id cartId, c.customer_id customerId, c.product_id productId, c.seller_id sellerId, c.amount amount, c.product_total_price productTotalPrice, c.product_weight_total productWeightTotal, p.product_name productName, p.product_unitprice productUnitPrice, pi.image1 image, ps.id stockId, ps.inventory inventory, c.created_at createdAt, dis.discounts discounts from (((cart c join product_item p on c.product_id = p.id) left join product_images pi on p.images_id = pi.id) left join product_stock ps on p.stock_id = ps.id) left join discounts dis on p.discounts_id = dis.id  where c.customer_id = ${customerId} and c.id = ${item} and c.seller_id = ${sellerId}`,
@@ -179,11 +170,11 @@ exports.getCartCheckout = async (req, res, next) => {
         }
       );
       if (cart[0]) {
-        cartCheckout.push(cart[0]);
+        cartProduct.push(cart[0]);
       }
     }
 
-    res.json({ cartCheckout });
+    res.json({ cartProduct });
   } catch (err) {
     next(err);
   }
@@ -204,8 +195,18 @@ exports.updateCart = async (req, res, next) => {
       createError('invaild cart', 400);
     }
 
-    const cart = await Cart.update(
-      { amount: amountCart, productTotalPrice: productTotalPriceCart },
+    const productItem = await ProductItem.findOne({
+      where: { id: checkCartId.productId },
+    });
+
+    const productWeightTotal = productItem.productWeightPiece * amountCart;
+
+    await Cart.update(
+      {
+        amount: amountCart,
+        productTotalPrice: productTotalPriceCart,
+        productWeightTotal: productWeightTotal,
+      },
       { where: { id: checkCartId.id } }
     );
 

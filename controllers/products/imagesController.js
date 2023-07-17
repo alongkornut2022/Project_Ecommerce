@@ -83,9 +83,6 @@ exports.updateProductImages = async (req, res, next) => {
     const indexImageUpdate = indexImageUpdateStr.split(',');
     const indexImageNull = indexImageNullStr.split(',');
 
-    console.log(indexImageUpdate);
-    console.log(indexImageNull);
-
     const oldImages = await ProductImages.findOne({
       where: {
         id: productItems.imagesId,

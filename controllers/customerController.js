@@ -22,7 +22,7 @@ exports.updateCustomer = async (req, res, next) => {
     }
 
     const checkFormatUsername = username.search(
-      /^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/
+      /^[A-Za-z][A-Za-z0-9_.-]{6,28}[^\W_]$/
     );
     if (checkFormatUsername) {
       createError('Not Format Username', 400);

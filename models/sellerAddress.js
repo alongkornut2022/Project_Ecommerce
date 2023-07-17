@@ -11,10 +11,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       lastName: {
         type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-          notEmpty: true,
-        },
+        allowNull: true,
+        // validate: {
+        //   notEmpty: false,
+        // },
       },
       addressDetail: {
         type: DataTypes.STRING,
@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       subDistrict: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
         validate: {
           notEmpty: true,
         },

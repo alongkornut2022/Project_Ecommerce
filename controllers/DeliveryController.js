@@ -125,8 +125,6 @@ exports.getDeliveryPrice = async (req, res, next) => {
       deliverys.push(i);
     }
 
-    // console.log(deliverys);
-
     const deliveryPrice = deliverys.reduce(
       (acc, item) => acc + item.dataValues.deliveryPrice,
       0
@@ -186,7 +184,6 @@ exports.getShippingRate = async (req, res, next) => {
 
     let newWeight = 0;
     if (weight <= 0 || weight === undefined || weight === null) {
-      // createError('invaild weight', 400);
       const deliveryPrice = 0;
       res.json({ deliveryPrice: deliveryPrice });
     } else if (weight > 0 && weight <= 1000) {

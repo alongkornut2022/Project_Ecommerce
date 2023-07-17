@@ -11,27 +11,27 @@ exports.register = async (req, res, next) => {
     const { shopName, email, phoneNumber, password, confirmPassword } =
       req.body;
 
-    // const checkFormatShopName = shopName.search(
-    //   /^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/
-    // );
+    const checkFormatShopName = shopName.search(
+      /^[A-Za-z0-9][A-Za-z0-9_.-]{2,48}[^\W_]$/
+    );
 
-    // if (checkFormatShopName) {
-    //   createError('not format shopname', 400);
-    // }
+    if (checkFormatShopName) {
+      createError('not format shopname', 400);
+    }
 
-    // const checkShopName = await Customer.findOne({
-    //   where: { shopName },
-    // });
+    const checkShopName = await Customer.findOne({
+      where: { shopName },
+    });
 
-    // if (checkShopName != null) {
-    //   createError('This Shop Name already exists', 400);
-    // }
+    if (checkShopName != null) {
+      createError('This Shop Name already exists', 400);
+    }
 
     if (!isEmail(email)) {
       createError('not email');
     }
 
-    const checkEmail = await Customer.findOne({
+    const checkEmail = await Seller.findOne({
       where: { email },
     });
 
@@ -43,7 +43,7 @@ exports.register = async (req, res, next) => {
       createError('not Phone Number', 400);
     }
 
-    const checkPhoneNumber = await Customer.findOne({
+    const checkPhoneNumber = await Seller.findOne({
       where: { phoneNumber },
     });
 

@@ -10,7 +10,7 @@ router.use('/search', productSearchRoute);
 
 router.get('/sort', productController.getProductSort);
 
-router.get('/:productId', productController.getProductById);
+router.get('/byid/:productId', productController.getProductById);
 router.get('/shop/:sellerId', productController.getAllProductBySeller);
 
 module.exports = router;

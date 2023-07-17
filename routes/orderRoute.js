@@ -12,10 +12,10 @@ router.get(
 );
 router.get('/search/:customerId', OrderController.getSearchOrder);
 
-// router.patch('/:orderDetailId/:customerId', OrderController.updateOrder);
-router.delete(
-  '/:orderDetailId/customer/:customerId',
-  OrderController.deleteOrderById
-);
+router.patch('/:orderDetailId/:customerId', OrderController.updateOrderDetail);
+// router.delete(
+//   '/:orderDetailId/customer/:customerId',
+//   OrderController.deleteOrderById
+// );
 
 module.exports = router;

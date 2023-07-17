@@ -2,7 +2,7 @@ const fs = require('fs');
 const { QueryTypes, Op } = require('sequelize');
 const { ProductRating, PostImages, Comment, sequelize } = require('../models');
 const createError = require('../utils/createError');
-const cloudinary = require('../utils/cloundinary');
+// const cloudinary = require('../utils/cloundinary');
 
 exports.createPost = async (req, res, next) => {
   try {
@@ -119,6 +119,39 @@ exports.getRatingByProduct = async (req, res, next) => {
   }
 };
 
+exports.getProductRatingReview = async (req, res, next) => {
+  try {
+    const { productId, orderDetailId, customerId } = req.params;
+
+    if (req.seller) {
+      createError('invaildseller', 400);
+    }
+
+    let productRatingReview = await ProductRating.findOne({
+      where: { productId, orderDetailId, customerId },
+    });
+
+    let comment;
+    if (productRatingReview != null) {
+      productRatingReview = productRatingReview;
+      if (productRatingReview.dataValues.commentId) {
+        comment = await Comment.findOne({
+          where: { id: productRatingReview.dataValues.commentId },
+        });
+      } else {
+        comment = '';
+      }
+    } else {
+      productRatingReview = '';
+      comment = '';
+    }
+
+    res.json({ productRatingReview, comment });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.getPostImages = async (req, res, next) => {
   try {
     const { postImagesId, customerId } = req.params;
@@ -164,7 +197,9 @@ exports.updatePost = async (req, res, next) => {
     let inputPostReview = postReview ? postReview : null;
     let inputDisplayUsername = checkboxUsername ? checkboxUsername : 0;
 
-    if (postImagesId) {
+    console.log('168');
+
+    if (postImagesId || postImagesId != undefined) {
       await ProductRating.update(
         {
           rating,
@@ -174,6 +209,7 @@ exports.updatePost = async (req, res, next) => {
         },
         { where: { id: productRatingId } }
       );
+      console.log('179');
     } else {
       await ProductRating.update(
         {
@@ -184,7 +220,7 @@ exports.updatePost = async (req, res, next) => {
         { where: { id: productRatingId } }
       );
     }
-
+    console.log('187');
     res.json({ message: 'update success' });
   } catch (err) {
     next(err);

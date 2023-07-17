@@ -33,6 +33,11 @@ router.get(
 router.get('/product/:productId/', PostController.getRatingByProduct);
 
 router.get(
+  '/productreview/:orderDetailId/:productId/:customerId',
+  PostController.getProductRatingReview
+);
+
+router.get(
   '/images/:postImagesId/customerId/:customerId',
   customerAuthenticate,
   PostController.getPostImages

@@ -21,10 +21,13 @@ exports.updateSeller = async (req, res, next) => {
       createError('invaild seller', 400);
     }
 
-    // const checkFormatShopName = shopName.search(/^[A-Za-z][A-Za-z0-9]{6,28}[^\W_]$/);
-    // if (checkFormatShopName) {
-    //   createError('Not Format Shopname', 400);
-    // }
+    const checkFormatShopName = shopName.search(
+      /^[A-Za-z0-9][A-Za-z0-9_.-]{2,48}[^\W_]$/
+    );
+
+    if (checkFormatShopName) {
+      createError('Not Format Shopname', 400);
+    }
 
     if (!isEmail(email)) {
       createError('Not Format Email');
@@ -54,6 +57,8 @@ exports.updateSellerPic = async (req, res, next) => {
     if (!req.files) {
       createError('sellerPicture is required', 400);
     }
+
+    console.log(req.files);
 
     const updateValue = {};
     const result = await cloudinary.upload(req.files.shopPicture[0].path);

@@ -49,7 +49,7 @@ exports.updatePostImages = async (req, res, next) => {
     if (!req.customer) {
       createError('is not seller', 400);
     }
-    if (req.customer.id === customerId) {
+    if (req.customer.id != customerId) {
       createError('invaild seller', 400);
     }
 
@@ -94,6 +94,8 @@ exports.updatePostImages = async (req, res, next) => {
     arrOldImages.push(image3);
     arrOldImages.push(image4);
 
+    console.log('97', arrOldImages);
+
     // delete old image update
 
     const delOldImageUpdate = [];
@@ -127,8 +129,11 @@ exports.updatePostImages = async (req, res, next) => {
       arrOldImages.splice(indexImageUpdate[index], 1, newImagesUpdate[index]);
     }
 
-    for (let index in indexImageNull) {
-      arrOldImages.splice(indexImageNull[index], 1, null);
+    if (indexImageNull[0] === '') {
+    } else {
+      for (let index in indexImageNull) {
+        arrOldImages.splice(indexImageNull[index], 1, null);
+      }
     }
 
     const [newImage1, newImage2, newImage3, newImage4] = arrOldImages;
@@ -161,7 +166,7 @@ exports.deletePostImages = async (req, res, next) => {
       createError('is not seller', 400);
     }
 
-    if (req.customer.id === customerId) {
+    if (req.customer.id != customerId) {
       createError('invaild seller', 400);
     }
 
@@ -209,7 +214,11 @@ exports.deletePostImages = async (req, res, next) => {
       }
     }
 
-    await PostImages.destroy({ where: { id: postImagesId } });
+    await PostImages.destroy({
+      where: { id: postImagesId },
+    });
+
+    res.json({ message: 'delete success' });
   } catch (err) {
     next(err);
   }

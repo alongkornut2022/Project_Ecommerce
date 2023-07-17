@@ -1,4 +1,4 @@
-const { QueryTypes, Op } = require('sequelize');
+const { QueryTypes } = require('sequelize');
 const {
   Cart,
   OrderItem,
@@ -18,13 +18,10 @@ exports.createOrder = async (req, res, next) => {
       createError('invaild customer', 400);
     }
 
-    // if (paymentMethod && customerAddressId && sellerIds && cartIds) {
-    //   createError('invaild Data', 400);
-    // }
-
     const newCartIds = cartIds.split(',');
     const newSellerIds = sellerIds.split(',');
 
+    // --- create order detail --- //
     let orderDetails;
     let order;
     for (let itemSeller of newSellerIds) {
@@ -35,42 +32,43 @@ exports.createOrder = async (req, res, next) => {
       });
 
       let productTotalPrice = 0;
+
+      // --- create order item --- //
+
       let cartBySeller = [];
-      let orderItems = [];
       for (let itemId of newCartIds) {
         const cartItem = await Cart.findOne({
           where: { id: itemId, sellerId: itemSeller },
         });
 
-        if (cartItem) {
-          const productItem = await sequelize.query(
-            `select p.product_unitprice productUnitPrice, dis.discounts discounts from product_item p left join discounts dis on p.discounts_id = dis.id where p.id = ${cartItem.dataValues.productId} ;`,
-            {
-              type: QueryTypes.SELECT,
-            }
-          );
+        const productItem = await sequelize.query(
+          `select p.product_unitprice productUnitPrice, dis.discounts discounts from product_item p left join discounts dis on p.discounts_id = dis.id where p.id = ${cartItem.dataValues.productId} ;`,
+          {
+            type: QueryTypes.SELECT,
+          }
+        );
 
-          console.log(productItem);
+        const orderItems = await OrderItem.create({
+          cartId: cartItem.dataValues.id,
+          orderDetailId: orderDetails.dataValues.id,
+          productId: cartItem.dataValues.productId,
+          customerId: customerId,
+          amount: cartItem.dataValues.amount,
+          productUnitPrice: productItem[0].productUnitPrice,
+          discounts: productItem[0].discounts,
+          productItemTotalPrice: cartItem.dataValues.productTotalPrice,
+          productWeightTotal: cartItem.dataValues.productWeightTotal,
+        });
 
-          orderItems = await OrderItem.create({
-            cartId: cartItem.dataValues.id,
-            orderDetailId: orderDetails.dataValues.id,
-            productId: cartItem.dataValues.productId,
-            customerId: customerId,
-            amount: cartItem.dataValues.amount,
-            productUnitPrice: productItem[0].productUnitPrice,
-            discounts: productItem[0].discounts,
-            productItemTotalPrice: cartItem.dataValues.productTotalPrice,
-            productWeightTotal: cartItem.dataValues.productWeightTotal,
-          });
-          productTotalPrice =
-            productTotalPrice + cartItem.dataValues.productTotalPrice;
-          cartBySeller.push(cartItem.dataValues.id);
-        }
+        productTotalPrice =
+          productTotalPrice + cartItem.dataValues.productTotalPrice;
+
+        cartBySeller.push(cartItem.dataValues.id);
       }
 
       const cartBySellerStr = cartBySeller.join(',');
 
+      // --- create delivery --- //
       const deliveryItem = await Delivery.findOne({
         where: { cartIds: cartBySellerStr },
       });
@@ -88,12 +86,14 @@ exports.createOrder = async (req, res, next) => {
         status = 'รอชำระเงิน';
       }
 
+      // --- create  payment --- //
       const payments = await Payment.create({
         paymentMethod: paymentMethod,
         allTotalPrice: allTotalPrice,
         status: status,
       });
 
+      // --- update order detail --- //
       order = await OrderDetail.update(
         {
           productTotalPrice: productTotalPrice,
@@ -106,6 +106,7 @@ exports.createOrder = async (req, res, next) => {
       );
     }
 
+    // --- delete cart --- //
     for (let item of newCartIds) {
       await Cart.destroy({ where: { id: item, customerId: customerId } });
     }
@@ -125,39 +126,58 @@ exports.getOrderDetail = async (req, res, next) => {
       createError('invaild customer', 400);
     }
 
+    let newStatus;
     if (status === 'ทั้งหมด') {
-      const orderCustomer = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} order by od.created_at desc;`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      res.json({ orderCustomer });
+      newStatus = ' ';
     } else if (status === 'รอชำระเงิน') {
-      const orderCustomer = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and (od.status = 'รอชำระเงิน' or od.status = 'รออนุมัติ') order by od.created_at desc;`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      res.json({ orderCustomer });
+      newStatus = ` and (od.status = 'รอชำระเงิน' or od.status = 'รออนุมัติ') `;
     } else if (status === 'ชำระเงินแล้ว') {
-      const orderCustomer = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') order by od.created_at desc;`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      res.json({ orderCustomer });
+      newStatus = ` and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') `;
     } else {
-      const orderCustomer = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.status = '${status}' order by od.created_at desc;`,
-        {
-          type: QueryTypes.SELECT,
-        }
-      );
-      res.json({ orderCustomer });
+      newStatus = ` and od.status = '${status}' `;
     }
+
+    const orderCustomer = await sequelize.query(
+      `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId}   ${newStatus}  order by od.created_at desc;`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+    res.json({ orderCustomer });
+
+    // if (status === 'ทั้งหมด') {
+    //   const orderCustomer = await sequelize.query(
+    //     `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} order by od.created_at desc;`,
+    //     {
+    //       type: QueryTypes.SELECT,
+    //     }
+    //   );
+    //   res.json({ orderCustomer });
+    // } else if (status === 'รอชำระเงิน') {
+    //   const orderCustomer = await sequelize.query(
+    //     `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and (od.status = 'รอชำระเงิน' or od.status = 'รออนุมัติ') order by od.created_at desc;`,
+    //     {
+    //       type: QueryTypes.SELECT,
+    //     }
+    //   );
+    //   res.json({ orderCustomer });
+    // } else if (status === 'ชำระเงินแล้ว') {
+    //   const orderCustomer = await sequelize.query(
+    //     `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') order by od.created_at desc;`,
+    //     {
+    //       type: QueryTypes.SELECT,
+    //     }
+    //   );
+    //   res.json({ orderCustomer });
+    // } else {
+    //   const orderCustomer = await sequelize.query(
+    //     `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, de.delivery_price deliveryPrice, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.status = '${status}' order by od.created_at desc;`,
+    //     {
+    //       type: QueryTypes.SELECT,
+    //     }
+    //   );
+    //   res.json({ orderCustomer });
+    // }
   } catch (err) {
     next(err);
   }
@@ -172,7 +192,6 @@ exports.getOrderItem = async (req, res, next) => {
     }
 
     const orderItem = await sequelize.query(
-      // `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.product_id productId, pi.product_name productName, pim.image1 image, oi.product_item_total_price productItemTotalPrice from (order_item oi left join product_item pi on oi.product_id = pi.id) left join product_images pim on pi.images_id = pim.id where oi.order_detail_id = ${orderDetailId};`,
       `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.product_id productId, pi.product_name productName, pi.product_unitprice productUnitPrice, oi.amount amount, pim.image1 image, oi.product_unit_price productUnitPrice, oi.discounts discounts, oi.product_item_total_price productItemTotalPrice, oi.customer_id customerId, c.username username, c.user_picture userPicture, oi.created_at createdAt  from ((order_item oi left join product_item pi on oi.product_id = pi.id) left join product_images pim on pi.images_id = pim.id) left join customer c on oi.customer_id = c.id where oi.order_detail_id = ${orderDetailId};`,
       {
         type: QueryTypes.SELECT,
@@ -196,7 +215,7 @@ exports.getSearchOrder = async (req, res, next) => {
 
     let orderCustomer2 = [];
     let orderCustomer1 = await sequelize.query(
-      `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.id = '${keyword}' or s.shop_name like '%${keyword}%' order by od.created_at desc;`,
+      `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, de.delivery_price deliveryPrice, s.shop_name shopName, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.id = '${keyword}' or s.shop_name like '%${keyword}%' or od.created_at like '%${keyword}%' order by od.created_at desc;`,
       {
         type: QueryTypes.SELECT,
       }
@@ -207,25 +226,26 @@ exports.getSearchOrder = async (req, res, next) => {
     }
 
     const orderItem = await sequelize.query(
-      `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.customer_id customerId, oi.product_id productId, pi.product_name productName from order_item oi left join product_item pi on oi.product_id = pi.id where oi.customer_id = ${customerId} and pi.product_name like '%${keyword}%';`,
+      `select oi.id orderItemId, oi.order_detail_id orderDetailId, oi.customer_id customerId, oi.product_id productId, pi.product_name productName from order_item oi left join product_item pi on oi.product_id = pi.id where oi.customer_id = ${customerId} and pi.product_name like '%${keyword}%' order by oi.created_at desc ;`,
       {
         type: QueryTypes.SELECT,
       }
     );
 
     if (orderItem) {
-      const newOrderItem = orderItem.map((item) => item.orderDetailId);
-      const orderItemIds = [...new Set(newOrderItem)];
-      for (let item of orderItemIds) {
-        let orderDatailItem = await sequelize.query(
-          `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, s.shop_name shopName, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.id = ${item};`,
+      const newOrderItem = orderItem.map((el) => el.orderDetailId);
+      const orderDetailIds = [...new Set(newOrderItem)];
+      for (let item of orderDetailIds) {
+        let orderDetailItem = await sequelize.query(
+          `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, de.delivery_price deliveryPrice, s.shop_name shopName, od.created_at createdAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join seller s on od.seller_id = s.id where od.customer_id = ${customerId} and od.id = ${item};`,
           {
             type: QueryTypes.SELECT,
           }
         );
 
-        orderCustomer2.push(orderDatailItem[0]);
+        orderCustomer2.push(orderDetailItem[0]);
       }
+
       res.json({ orderCustomer: orderCustomer2 });
     }
   } catch (err) {
@@ -233,7 +253,7 @@ exports.getSearchOrder = async (req, res, next) => {
   }
 };
 
-exports.deleteOrderById = async (req, res, next) => {
+exports.updateOrderDetail = async (req, res, next) => {
   try {
     const { orderDetailId, customerId } = req.params;
 
@@ -241,25 +261,60 @@ exports.deleteOrderById = async (req, res, next) => {
       createError('invaild customer', 400);
     }
 
-    const orderItem = await OrderItem.findAll({
-      where: { orderDetailId: orderDetailId },
-    });
-
-    const orderItemId = orderItem.map((item) => item.id);
-    for (let item of orderItemId) {
-      await OrderItem.destroy({ where: { id: item } });
-    }
-
     const orderDetail = await OrderDetail.findOne({
       where: { id: orderDetailId },
     });
 
-    await OrderDetail.destroy({ where: { id: orderDetailId } });
-    await Delivery.destroy({ where: { id: orderDetail.deliveryId } });
-    await Payment.destroy({ where: { id: orderDetail.paymentId } });
+    if (orderDetail === null) {
+      createError('invaild order', 400);
+    }
+
+    await OrderDetail.update(
+      { status: 'ยกเลิก' },
+      { where: { id: orderDetailId } }
+    );
+    await Delivery.update(
+      { status: 'ยกเลิก' },
+      { where: { id: orderDetail.deliveryId } }
+    );
+    await Payment.update(
+      { status: 'ยกเลิก' },
+      { where: { id: orderDetail.paymentId } }
+    );
 
     res.status(204).json();
   } catch (err) {
     next(err);
   }
 };
+
+// exports.deleteOrderById = async (req, res, next) => {
+//   try {
+//     const { orderDetailId, customerId } = req.params;
+
+//     if (req.customer.id != customerId) {
+//       createError('invaild customer', 400);
+//     }
+
+//     const orderItem = await OrderItem.findAll({
+//       where: { orderDetailId: orderDetailId },
+//     });
+
+//     const orderItemId = orderItem.map((item) => item.id);
+//     for (let item of orderItemId) {
+//       await OrderItem.destroy({ where: { id: item } });
+//     }
+
+//     const orderDetail = await OrderDetail.findOne({
+//       where: { id: orderDetailId },
+//     });
+
+//     await OrderDetail.destroy({ where: { id: orderDetailId } });
+//     await Delivery.destroy({ where: { id: orderDetail.deliveryId } });
+//     await Payment.destroy({ where: { id: orderDetail.paymentId } });
+
+//     res.status(204).json();
+//   } catch (err) {
+//     next(err);
+//   }
+// };
