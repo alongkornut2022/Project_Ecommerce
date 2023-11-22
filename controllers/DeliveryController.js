@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const {
+  OrderDetail,
   PostcodeProvince,
   ShippingRatesStandard,
   ShippingRatesEms,
@@ -281,6 +282,30 @@ exports.getDeliveryCartIds = async (req, res, next) => {
 
     res.json({ deliveryCartIds });
   } catch (err) {
-    console.log(err);
+    next(err);
+  }
+};
+
+exports.updateDeliveryRecived = async (req, res, next) => {
+  try {
+    const { customerId, deliveryId, orderDetailId } = req.params;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    await Delivery.update(
+      { status: 'จัดส่งสำเร็จ' },
+      { where: { id: deliveryId } }
+    );
+
+    await OrderDetail.update(
+      { status: 'จัดส่งสำเร็จ' },
+      { where: { id: orderDetailId } }
+    );
+
+    res.json({ message: 'update success' });
+  } catch (err) {
+    next(err);
   }
 };

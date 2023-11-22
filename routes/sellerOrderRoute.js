@@ -10,4 +10,9 @@ router.get(
 );
 router.get('/search/:sellerId', sellerOrderController.getSearchOrder);
 
+router.patch(
+  '/delivery/:sellerId/:deliveryId/:orderDetailId',
+  sellerOrderController.updateDelivery
+);
+
 module.exports = router;

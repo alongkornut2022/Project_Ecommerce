@@ -42,7 +42,7 @@ exports.createOrder = async (req, res, next) => {
         });
 
         const productItem = await sequelize.query(
-          `select p.product_unitprice productUnitPrice, dis.discounts discounts from product_item p left join discounts dis on p.discounts_id = dis.id where p.id = ${cartItem.dataValues.productId} ;`,
+          `select p.product_unitprice productUnitPrice, dis.discounts discounts from product_item p left join discounts dis on p.discounts_id = dis.id where p.id = ${cartItem.dataValues.productId};`,
           {
             type: QueryTypes.SELECT,
           }
@@ -80,7 +80,7 @@ exports.createOrder = async (req, res, next) => {
       if (paymentMethod === 'ชำระเงินปลายทาง') {
         status = 'รออนุมัติ';
       } else if (
-        paymentMethod === 'Mobile Banking' ||
+        paymentMethod === 'การโอนเงิน' ||
         paymentMethod === 'Credit Card'
       ) {
         status = 'รอชำระเงิน';
@@ -178,6 +178,27 @@ exports.getOrderDetail = async (req, res, next) => {
     //   );
     //   res.json({ orderCustomer });
     // }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getOrderDetailById = async (req, res, next) => {
+  try {
+    const { customerId, orderDetailId } = req.params;
+
+    if (req.customer.id != customerId) {
+      createError('invaild customer', 400);
+    }
+
+    const orderDetailData = await sequelize.query(
+      `select od.id orderDetailId, od.customer_address_id customerAddressId, ca.first_name fName, ca.last_name lName, ca.address_detail addressDetail, ca.sub_district subDistrict, ca.district District, ca.province province, ca.postcode postcode, ca.phone_number phoneNumber, od.delivery_id deliveryId, de.delivery_option deliveryOption, de.delivery_price deliveryPrice, od.payment_id paymentId, od.product_total_price productTotalPrice,  pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, pay.image paymentImage, od.status status, od.created_at createdAt, od.updated_at updatedAt from ((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer_address ca on od.customer_address_id = ca.id where od.id = ${orderDetailId} ;`,
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.json({ orderDetailData });
   } catch (err) {
     next(err);
   }

@@ -28,4 +28,9 @@ router.get(
 
 router.get('/shipping/:customerId/', DeliveryController.getShippingRate);
 
+router.patch(
+  '/recived/:customerId/:deliveryId/:orderDetailId',
+  DeliveryController.updateDeliveryRecived
+);
+
 module.exports = router;

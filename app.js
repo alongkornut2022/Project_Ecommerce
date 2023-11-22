@@ -18,6 +18,7 @@ const carouselRoute = require('./routes/carouselRoute');
 const sellerOrderRoute = require('./routes/sellerOrderRoute');
 const commentRoute = require('./routes/commentRoute');
 const thaiAddressRoute = require('./routes/thaiAddressRoute');
+const paymentRoute = require('./routes/paymentRoute');
 
 const notFoundMiddleware = require('./middlewares/notFound');
 const errormiddleware = require('./middlewares/error');
@@ -33,26 +34,33 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Customers
 app.use('/customers', authRoute);
 app.use('/customers', customerAuthenticate, customerRoute);
 
+// Sellers
 app.use('/sellers', sellerAuthRoute);
 app.use('/sellers', sellerAuthenticate, sellerRoute);
 app.use('/sellers/products', sellerAuthenticate, sellerProductRoute);
 app.use('/sellers/order', sellerAuthenticate, sellerOrderRoute);
 app.use('/sellers/comment', sellerAuthenticate, commentRoute);
 
+// Address customer and Seller
 app.use('/address', addressRoute);
 
+// Product
 app.use('/products', productRoute);
 app.use('/carousel', carouselRoute);
 
+// purchase
 app.use('/cart', customerAuthenticate, cartRoute);
 app.use('/Purchase', customerAuthenticate, PurchaseRoute);
 app.use('/delivery', customerAuthenticate, DeliveryRoute);
 app.use('/postreview', PostRoute);
 app.use('/thaiaddress', thaiAddressRoute);
+app.use('/payment', customerAuthenticate, paymentRoute);
 
+// error middleware
 app.use(notFoundMiddleware);
 app.use(errormiddleware);
 

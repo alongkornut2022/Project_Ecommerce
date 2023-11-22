@@ -148,6 +148,7 @@ exports.updateProductImages = async (req, res, next) => {
       let path = await cloudinary.upload(item.path);
       uploadToClound.push(path);
     }
+
     const newImagesUpdate = uploadToClound.map((item) => item.secure_url);
 
     for (let index in indexImageUpdate) {

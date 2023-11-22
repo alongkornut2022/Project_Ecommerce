@@ -6,7 +6,7 @@ exports.getProductSort = async (req, res, next) => {
   try {
     const { limit, offset, orderBy } = req.query;
 
-    if (limit == '' && offset == '') {
+    if (limit === '' && offset === '') {
       const productSort = await sequelize.query(
         `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , p.created_at createdAt, dis.id discountsId, dis.discounts discounts  from ((product_item p join product_stock ps on p.stock_id = ps.id)  join product_images pi on p.images_id = pi.id)  left join discounts dis on p.discounts_id = dis.id  where p.product_status = 'selling' and ps.inventory > 0 order by ${orderBy} ${limit} ${offset}`,
         {
@@ -14,15 +14,15 @@ exports.getProductSort = async (req, res, next) => {
         }
       );
       res.json({ productSort });
+    } else {
+      const productSort = await sequelize.query(
+        `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , p.created_at createdAt, dis.id discountsId, dis.discounts discounts  from ((product_item p left join product_stock ps on p.stock_id = ps.id)  left join product_images pi on p.images_id = pi.id) left join discounts dis on p.discounts_id = dis.id  where p.product_status = 'selling' and ps.inventory > 0 order by ${orderBy} limit ${limit} offset ${offset}`,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+      res.json({ productSort });
     }
-
-    const productSort = await sequelize.query(
-      `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, ps.alreadysold , ps.inventory, pi.image1 , p.created_at createdAt, dis.id discountsId, dis.discounts discounts  from ((product_item p left join product_stock ps on p.stock_id = ps.id)  left join product_images pi on p.images_id = pi.id) left join discounts dis on p.discounts_id = dis.id  where p.product_status = 'selling' and ps.inventory > 0 order by ${orderBy} limit ${limit} offset ${offset}`,
-      {
-        type: QueryTypes.SELECT,
-      }
-    );
-    res.json({ productSort });
   } catch (err) {
     next(err);
   }
@@ -40,19 +40,6 @@ exports.getProductById = async (req, res, next) => {
 
     const productSpecs = await fs.readFile(productItem[0].productSpec, 'utf8');
     res.json({ productItem, productSpecs });
-
-    // const strProductSpec = productItem[0].productSpec.split('.');
-    // const strProductSpec2 = productItem[0].productSpec.split('\\');
-
-    // let productSpecs;
-    // if (
-    //   strProductSpec[strProductSpec.length - 1] === 'plain' &&
-    //   strProductSpec2[0] === 'public'
-    // ) {
-    //   productSpecs = await fs.readFile(productItem[0].productSpec, 'utf8');
-    //   res.json({ productItem, productSpecs });
-    // }
-    // res.json({ productItem, productSpecs: productItem[0].productSpec });
   } catch (err) {
     next(err);
   }

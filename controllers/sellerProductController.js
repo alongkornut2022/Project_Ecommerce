@@ -57,73 +57,6 @@ exports.createProduct = async (req, res, next) => {
   }
 };
 
-// exports.createProduct = async (req, res, next) => {
-//   // const t = await sequelize.transaction();
-//   try {
-//     const { sellerId } = req.params;
-//     const {
-//       productName,
-//       productUnitprice,
-//       categoryId,
-//       stockId,
-//       imagesId,
-//       specId,
-//       stockStart,
-//       alreadysold,
-//       inventory,
-//       productWeightPiece,
-//     } = req.body;
-
-//     if (!req.seller) {
-//       createError('is not seller', 400);
-//     }
-//     if (req.seller.id === sellerId) {
-//       createError('invaild seller', 400);
-//     }
-
-//     const productitems = await ProductItem.create(
-//       {
-//         productName,
-//         productUnitprice,
-//         categoryId,
-//         stockId,
-//         imagesId,
-//         specId,
-//         productWeightPiece,
-//         sellerId: req.seller.id,
-//       }
-//       // { transaction: t }
-//     );
-//     // res.status(201).json({ productitems: productitems });
-
-//     const productstocks = await ProductStock.create(
-//       {
-//         stockStart,
-//         alreadysold,
-//         inventory,
-//       }
-//       // { transaction: t }
-//     );
-
-//     await ProductItem.update(
-//       { stockId: productstocks.id },
-//       { where: { id: productitems.id } }
-//       // { transaction: t }
-//     );
-
-//     const products = await ProductItem.findOne({
-//       where: { id: productitems.id },
-//     });
-
-//     // await t.commit();
-
-//     res.status(201).json({ products: products });
-//   } catch (err) {
-//     // await t.rollback();
-//     next(err);
-//   }
-// };
-
 exports.getAllProductBySeller = async (req, res, next) => {
   try {
     const { sellerId } = req.params;
@@ -158,41 +91,6 @@ exports.getAllProductBySeller = async (req, res, next) => {
     next(err);
   }
 };
-
-// exports.getSearchProductBySeller = async (req, res, next) => {
-//   try {
-//     const { sellerId } = req.params;
-//     const { keyword, navBar } = req.query;
-
-//     if (!req.seller) {
-//       createError('is not seller', 400);
-//     }
-
-//     if (!req.seller.id === sellerId) {
-//       createError('invaild seller', 400);
-//     }
-
-//     if (navBar === 'ทั้งหมด') {
-//       const productSeller = await sequelize.query(
-//         `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts  from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id where sl.id) left join discounts dis on p.discounts_id = dis.id = ${req.seller.id} and p.product_name like '%${keyword}%' order by p.updated_at desc  ;`,
-//         {
-//           type: QueryTypes.SELECT,
-//         }
-//       );
-//       res.json({ productSeller: productSeller });
-//     } else {
-//       const productSeller = await sequelize.query(
-//         `select p.id productId, p.product_name productName, p.product_unitprice productUnitprice, p.stock_id stockId,  ps.stock_start stockStart, ps.alreadysold alreadysold, ps.inventory inventory, p.category_id categoryId, pc.category_name categoryName, p.seller_id sellerId, sl.shop_name shopName, p.images_id imagesId, pi.image1, p.product_status productStatus, dis.id discountsId, dis.discounts discounts  from ((((product_item p join product_stock ps on p.stock_id = ps.id) join product_category pc on p.category_id = pc.id) join product_images pi on p.images_id = pi.id) join seller sl on p.seller_id = sl.id) left join discounts dis on p.discounts_id = dis.id where sl.id = ${req.seller.id} and p.product_name like '%${keyword}%' and p.product_status = '${navBar}' order by p.updated_at desc  ;`,
-//         {
-//           type: QueryTypes.SELECT,
-//         }
-//       );
-//       res.json({ productSeller: productSeller });
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// };
 
 exports.getSearchProductBySeller = async (req, res, next) => {
   try {
@@ -657,10 +555,6 @@ exports.deleteProduct = async (req, res, next) => {
     const delProductSpec = await ProductSpec.destroy({
       where: { id: productItem.dataValues.specId },
     });
-
-    // if (delProductSpec === 1) {
-    //   fs.unlinkSync(productSpec.productSpec);
-    // }
 
     const productImages = await ProductImages.findOne({
       where: {

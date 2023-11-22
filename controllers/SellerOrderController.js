@@ -1,12 +1,5 @@
-const { QueryTypes, Op } = require('sequelize');
-const {
-  Cart,
-  OrderItem,
-  OrderDetail,
-  Delivery,
-  Payment,
-  sequelize,
-} = require('../models');
+const { QueryTypes } = require('sequelize');
+const { OrderDetail, Delivery, sequelize } = require('../models');
 const createError = require('../utils/createError');
 
 exports.getOrderDetail = async (req, res, next) => {
@@ -24,7 +17,7 @@ exports.getOrderDetail = async (req, res, next) => {
 
     if (status === 'ทั้งหมด') {
       const orderSeller = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id  where od.seller_id = ${sellerId} order by od.created_at desc;`,
+        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, pay.image paymentImage, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id  where od.seller_id = ${sellerId} order by od.created_at desc;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -32,7 +25,7 @@ exports.getOrderDetail = async (req, res, next) => {
       res.json({ orderSeller });
     } else if (status === 'รอชำระเงิน') {
       const orderSeller = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice, ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id where od.seller_id = ${sellerId} and (od.status = 'รอชำระเงิน' or od.status = 'รออนุมัติ') order by od.created_at desc;`,
+        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, pay.image paymentImage, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice, ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id where od.seller_id = ${sellerId} and (od.status = 'รอชำระเงิน' or od.status = 'รออนุมัติ') order by od.created_at desc;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -40,7 +33,7 @@ exports.getOrderDetail = async (req, res, next) => {
       res.json({ orderSeller });
     } else if (status === 'ชำระเงินแล้ว') {
       const orderSeller = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id where od.seller_id = ${sellerId} and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') order by od.created_at desc;`,
+        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, pay.image paymentImage, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id where od.seller_id = ${sellerId} and (od.status = 'ชำระเงินแล้ว' or od.status = 'อนุมัติแล้ว') order by od.created_at desc;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -48,7 +41,7 @@ exports.getOrderDetail = async (req, res, next) => {
       res.json({ orderSeller });
     } else {
       const orderSeller = await sequelize.query(
-        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice, ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer,ca.phone_number phoneNumberCustomer, od.created_at createdAt from (((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id where od.seller_id = ${sellerId} and od.status = '${status}' order by od.created_at desc;`,
+        `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, pay.image paymentImage, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice, ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer,ca.phone_number phoneNumberCustomer, od.created_at createdAt from (((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id where od.seller_id = ${sellerId} and od.status = '${status}' order by od.created_at desc;`,
         {
           type: QueryTypes.SELECT,
         }
@@ -177,70 +170,40 @@ exports.getSearchOrder = async (req, res, next) => {
     }
 
     const orderSeller = await sequelize.query(
-      // `select od.id orderDetailId from (((order_detail od left join order_item oi on od.id = oi.order_detail_id) left join product_item pi on oi.product_id = pi.id) left join seller sl on pi.seller_id = sl.id) left join customer cus on od.customer_id = cus.id  where od.seller_id = ${sellerId}  ${opNavBar}  ${opOrderNumber}  ${opProductName}  ${opCustomer}  ${opOrderDate}  ${opOrderSumPrice} group by od.id order by od.product_total_price  ;`,
-      `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, cus.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt  from (((((((order_detail od left join order_item oi on od.id = oi.order_detail_id) left join product_item pi on oi.product_id = pi.id) left join seller sl on pi.seller_id = sl.id) left join customer cus on od.customer_id = cus.id)     left join delivery de on od.delivery_id = de.id)   left join payment pay on od.payment_id = pay.id)   left join customer_address ca on od.customer_address_id = ca.id)  where od.seller_id = ${sellerId}  ${opNavBar}  ${opOrderNumber}  ${opProductName}  ${opCustomer}  ${opOrderDate}  ${opOrderSumPrice} group by od.id  ${opSort}  ;`,
+      `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, pay.image paymentImage,  cus.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt  from (((((((order_detail od left join order_item oi on od.id = oi.order_detail_id) left join product_item pi on oi.product_id = pi.id) left join seller sl on pi.seller_id = sl.id) left join customer cus on od.customer_id = cus.id)     left join delivery de on od.delivery_id = de.id)   left join payment pay on od.payment_id = pay.id)   left join customer_address ca on od.customer_address_id = ca.id)  where od.seller_id = ${sellerId}  ${opNavBar}  ${opOrderNumber}  ${opProductName}  ${opCustomer}  ${opOrderDate}  ${opOrderSumPrice} group by od.id  ${opSort}  ;`,
       {
         type: QueryTypes.SELECT,
       }
     );
 
     res.json({ orderSeller: orderSeller });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    // console.log(orderItem);
+exports.updateDelivery = async (req, res, next) => {
+  try {
+    const { sellerId, deliveryId, orderDetailId } = req.params;
 
-    // let orderSeller = [];
-    // if (orderItem) {
-    //   const newOrderItem = orderItem.map((item) => item.orderDetailId);
-    //   const orderItemIds = [...new Set(newOrderItem)];
-    //   for (let item of orderItemIds) {
-    //     let orderDatailItem = await sequelize.query(
-    //       `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id  where od.seller_id = ${sellerId} and od.id = ${item} ;`,
+    if (!req.seller) {
+      createError('is not seller', 400);
+    }
 
-    //       {
-    //         type: QueryTypes.SELECT,
-    //       }
-    //     );
+    if (req.seller.id != sellerId) {
+      createError('invaild seller', 400);
+    }
 
-    //     orderSeller.push(orderDatailItem[0]);
-    //   }
-    //   res.json({ orderSeller: orderSeller });
-    // }
+    await Delivery.update(
+      { status: 'อยู่ระหว่างจัดส่ง' },
+      { where: { id: deliveryId } }
+    );
+    await OrderDetail.update(
+      { status: 'อยู่ระหว่างจัดส่ง' },
+      { where: { id: orderDetailId } }
+    );
 
-    // let orderSeller2 = [];
-    // let orderSeller1 = await sequelize.query(
-    //   `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id  where od.seller_id = ${sellerId} and (od.id = '${keyword}' or c.username like '%${keyword}%') order by od.created_at desc;`,
-    //   {
-    //     type: QueryTypes.SELECT,
-    //   }
-    // );
-
-    // if (orderSeller1.length > 0) {
-    //   res.json({ orderSeller: orderSeller1 });
-    // }
-
-    // const orderItem = await sequelize.query(
-    //   `select oi.order_detail_id orderDetailId from (order_item oi left join product_item pi on oi.product_id = pi.id) left join seller sl on pi.seller_id = sl.id where sl.id = ${sellerId} and pi.product_name like '%${keyword}%' ;`,
-    //   {
-    //     type: QueryTypes.SELECT,
-    //   }
-    // );
-
-    // if (orderItem) {
-    //   const newOrderItem = orderItem.map((item) => item.orderDetailId);
-    //   const orderItemIds = [...new Set(newOrderItem)];
-    //   for (let item of orderItemIds) {
-    //     let orderDatailItem = await sequelize.query(
-    //       `select od.id orderDetailId, od.seller_id sellerId, od.customer_id customerId, od.customer_address_id customerAddressId, od.delivery_id deliveryId, od.payment_id paymentId, od.product_total_price productTotalPrice, od.status status, pay.payment_method paymentMethod, pay.all_total_price allTotalPrice, c.username customerName, de.delivery_option deliveryOption, de.delivery_price deliveryPrice,  ca.first_name fNameCustomer, ca.last_name lNameCustomer, ca.address_detail addressCustomer, ca.district districtCustomer, ca.province provinceCustomer, ca.postcode postcodeCustomer, ca.phone_number phoneNumberCustomer, sl.shop_name shopName, od.created_at createdAt from ((((order_detail od left join delivery de on od.delivery_id = de.id) left join payment pay on od.payment_id = pay.id) left join customer c on od.customer_id = c.id) left join customer_address ca on od.customer_address_id = ca.id) left join seller sl on od.seller_id = sl.id  where od.seller_id = ${sellerId} and od.id = ${item} ;`,
-
-    //       {
-    //         type: QueryTypes.SELECT,
-    //       }
-    //     );
-
-    //     orderSeller2.push(orderDatailItem[0]);
-    //   }
-    //   res.json({ orderSeller: orderSeller2 });
-    // }
+    res.json({ message: 'update success' });
   } catch (err) {
     next(err);
   }
